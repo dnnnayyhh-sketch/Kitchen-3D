@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>KitchenPro 3D | محرك تصميم المطابخ وقص الألواح</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --panel-light: #273449;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #f59e0b;
+      --accent-hover: #d97706;
+      --success: #10b981;
+      --danger: #ef4444;
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Cairo', sans-serif;
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    /* Header */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 14px;
+      padding-top: max(10px, env(safe-area-inset-top));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), #b45309);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 18px;
+      color: #0f172a;
+      flex-shrink: 0;
+    }
+    .brand h1 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    .brand span {
+      font-size: 11px;
+      color: var(--muted);
+      display: block;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 9px 14px;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: 0.18s ease;
+    }
+    .btn-primary { background: var(--accent); color: #0f172a; }
+    .btn-primary:active { transform: scale(0.97); background: var(--accent-hover); }
+    .btn-secondary { background: var(--panel-light); color: var(--text); border: 1px solid var(--border); }
+    .btn-success { background: var(--success); color: #052e16; }
+    .btn-danger { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.35); }
+    .btn-sm { padding: 6px 10px; font-size: 12px; }
+
+    /* Main Layout */
+    .app-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      padding: 12px;
+      max-width: 1480px;
+      margin: 0 auto;
+      padding-bottom: max(24px, env(safe-area-inset-bottom));
+    }
+
+    @media (min-width: 1024px) {
+      .app-grid {
+        grid-template-columns: 440px 1fr;
+        align-items: start;
+      }
+      .viewport-sticky {
+        position: sticky;
+        top: 74px;
+      }
+    }
+
+    /* 3D Canvas Card */
+    .canvas-card {
+      background: radial-gradient(circle at top, #1e293b 0%, #0b1120 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: relative;
+    }
+
+    #canvas-container {
+      width: 100%;
+      height: 330px;
+      touch-action: none; /* Critical for iPhone 3D Orbit */
+      position: relative;
+    }
+    @media (min-width: 1024px) {
+      #canvas-container { height: 470px; }
+    }
+
+    .canvas-overlay-top {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      left: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .canvas-badge {
+      background: rgba(15, 23, 42, 0.78);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent);
+      pointer-events: auto;
+    }
+
+    .canvas-toolbar {
+      display: flex;
+      gap: 6px;
+      padding: 10px;
+      background: rgba(15, 23, 42, 0.75);
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+
+    /* Panels & Tabs */
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      background: var(--bg);
+      padding: 5px;
+      border-radius: 12px;
+      margin-bottom: 14px;
+      border: 1px solid var(--border);
+    }
+    .tab-btn {
+      background: transparent;
+      color: var(--muted);
+      border: none;
+      border-radius: 9px;
+      padding: 9px 4px;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #0f172a;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Form Controls - 16px font prevents iOS Safari auto-zoom */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .form-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field label { font-size: 12px; color: var(--muted); font-weight: 600; }
+    .field input, .field select {
+      width: 100%;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 10px;
+      font-family: inherit;
+      font-size: 16px; /* Prevents iOS zoom */
+      font-weight: 700;
+      outline: none;
+    }
+    .field input:focus, .field select:focus {
+      border-color: var(--accent);
+    }
+
+    .color-swatches {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .swatch {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
+    }
+    .swatch.active {
+      border-color: var(--accent);
+      transform: scale(1.1);
+    }
+
+    /* Unit List */
+    .unit-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .unit-item {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .unit-item.active-unit {
+      border-color: var(--accent);
+      background: rgba(245, 158, 11, 0.08);
+    }
+    .unit-meta { font-size: 12px; color: var(--muted); }
+    .unit-title { font-weight: 800; font-size: 14px; }
+
+    /* KPI Stats */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    @media (min-width: 640px) {
+      .kpi-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    .kpi {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 10px;
+      text-align: center;
+    }
+    .kpi-val { font-size: 18px; font-weight: 800; color: var(--accent); }
+    .kpi-lbl { font-size: 11px; color: var(--muted); }
+
+    /* Tables */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      margin-bottom: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      background: var(--bg);
+    }
+    th, td {
+      padding: 9px 10px;
+      text-align: right;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    th {
+      background: var(--panel-light);
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* Nesting SVG Sheets */
+    .sheet-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+    .sheet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .sheet-svg {
+      width: 100%;
+      height: auto;
+      background: #172033;
+      border-radius: 8px;
+      display: block;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.72);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      max-width: 520px;
+      width: 100%;
+      max-height: 88dvh;
+      overflow-y: auto;
+      padding: 16px;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--accent);
+      margin: 12px 0 8px;
+    }
+
+    .quote-total-box {
+      background: linear-gradient(135deg, rgba(245,158,11,0.16), rgba(16,185,129,0.12));
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 12px 0;
+    }
+
+    /* Print / PDF Styles (Works natively on iOS Safari!) */
+    #print-area { display: none; }
+
+    @media print {
+      body { background: #fff !important; color: #111 !important; }
+      .topbar, .app-grid, .modal-backdrop { display: none !important; }
+      #print-area {
+        display: block !important;
+        padding: 16px;
+        font-family: 'Cairo', sans-serif;
+        color: #111;
+      }
+      #print-area table { background: #fff; color: #111; border: 1px solid #cbd5e1; }
+      #print-area th { background: #f1f5f9 !important; color: #0f172a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      #print-area td, #print-area th { border: 1px solid #cbd5e1; padding: 6px 8px; }
+      .print-sheet { page-break-inside: avoid; margin-bottom: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-logo" id="brand-logo-letter">K</div>
+      <div>
+        <h1 id="brand-name-display">KitchenPro 3D</h1>
+        <span id="brand-sub-display">محرك تصميم المطابخ وقص الألواح</span>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="btn btn-secondary btn-sm" onclick="openSettings()">⚙️ الأسعار والهوية</button>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="app-grid">
+    <!-- Left/Top: 3D Live Viewport -->
+    <section class="viewport-sticky">
+      <div class="canvas-card">
+        <div class="canvas-overlay-top">
+          <div class="canvas-badge" id="dim-badge">80 × 72 × 56 سم</div>
+          <div class="canvas-badge" id="price-badge">0 $</div>
+        </div>
+        <div id="canvas-container"></div>
+        <div class="canvas-toolbar">
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-secondary btn-sm" id="btn-doors" onclick="toggleDoors()">🚪 فتح الأبواب</button>
+            <button class="btn btn-secondary btn-sm" id="btn-xray" onclick="toggleXray()">👁️ شفافية</button>
+            <button class="btn btn-secondary btn-sm" onclick="resetCamera()">🔄 ضبط</button>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="addUnitToProject()">➕ إضافة للمشروع</button>
+        </div>
+      </div>
+
+      <!-- Quick Project Units Bar -->
+      <div class="panel" style="margin-top:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <strong style="font-size:14px;">📦 وحدات المطبخ الحالية (<span id="units-count">1</span>)</strong>
+          <button class="btn btn-danger btn-sm" onclick="clearProject()">مسح الكل</button>
+        </div>
+        <div class="unit-list" id="unit-list"></div>
+      </div>
+    </section>
+
+    <!-- Right/Bottom: Control & Engineering Tabs -->
+    <section class="panel">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('design', this)">🛠️ التصميم</button>
+        <button class="tab-btn" onclick="switchTab('cutlist', this)">📐 قائمة القص</button>
+        <button class="tab-btn" onclick="switchTab('nesting', this)">🪵 خريطة الألواح</button>
+        <button class="tab-btn" onclick="switchTab('quote', this)">💰 عرض السعر</button>
+      </div>
+
+      <!-- TAB 1: DESIGN -->
+      <div id="tab-design" class="tab-content active">
+        <div class="form-grid">
+          <div class="field">
+            <label>نوع الوحدة</label>
+            <select id="u-type" onchange="onTypeChange()">
+              <option value="base">خزانة سفلية (أرضية)</option>
+              <option value="wall">خزانة علوية (معلقة)</option>
+              <option value="tall">خزانة عمودية (طويلة)</option>
+              <option value="drawers">وحدة أدراج (جوارير)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>العدد (تكرار الوحدة)</label>
+            <input type="number" id="u-qty" value="1" min="1" max="20" oninput="updateCurrentUnit()" />
+          </div>
+        </div>
+
+        <div class="form-grid-3">
+          <div class="field">
+            <label>العرض (سم)</label>
+            <input type="number" id="u-w" value="80" min="25" max="200" oninput="updateCurrentUnit()" />
+          </div>
+          <div class="field">
+            <label>ارتفاع الصندوق (سم)</label>
+            <input type="number" id="u-h" value="72" min="30" max="240" oninput="updateCurrentUnit()" />
+          </div>
+          <div class="field">
+            <label>العمق (سم)</label>
+            <input type="number" id="u-d" value="56" min="25" max="80" oninput="updateCurrentUnit()" />
+          </div>
+        </div>
+
+        <div class="form-grid-3">
+          <div class="field">
+            <label>عدد الأبواب</label>
+            <select id="u-doors" onchange="updateCurrentUnit()">
+              <option value="0">بدون أبواب</option>
+              <option value="1">باب واحد</option>
+              <option value="2" selected>بابين</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>عدد الرفوف</label>
+            <input type="number" id="u-shelves" value="1" min="0" max="8" oninput="updateCurrentUnit()" />
+          </div>
+          <div class="field">
+            <label>عدد الأدراج</label>
+            <input type="number" id="u-drawers" value="0" min="0" max="5" oninput="updateCurrentUnit()" />
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label>ارتفاع الأرجل/الوزرة (سم)</label>
+            <input type="number" id="u-plinth" value="10" min="0" max="20" oninput="updateCurrentUnit()" />
+          </div>
+          <div class="field">
+            <label>الرخامة العلوية (للسفلي)</label>
+            <select id="u-counter" onchange="updateCurrentUnit()">
+              <option value="1" selected>مع رخامة (بروز 4 سم)</option>
+              <option value="0">بدون رخامة</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field" style="margin-bottom:12px;">
+          <label>لون وخامة الأبواب (معاينة فورية)</label>
+          <div class="color-swatches" id="color-swatches"></div>
+        </div>
+
+        <div style="display:flex; gap:8px; margin-top:14px;">
+          <button class="btn btn-primary" style="flex:1;" onclick="addUnitToProject()">➕ حفظ كوحدة جديدة بالمطبخ</button>
+        </div>
+      </div>
+
+      <!-- TAB 2: CUT LIST -->
+      <div id="tab-cutlist" class="tab-content">
+        <div class="kpi-grid">
+          <div class="kpi"><div class="kpi-val" id="kpi-pieces">0</div><div class="kpi-lbl">إجمالي القطع</div></div>
+          <div class="kpi"><div class="kpi-val" id="kpi-area">0 م²</div><div class="kpi-lbl">مساحة الخشب الصافية</div></div>
+          <div class="kpi"><div class="kpi-val" id="kpi-edge">0 م</div><div class="kpi-lbl">شريط PVC المطلوب</div></div>
+          <div class="kpi"><div class="kpi-val" id="kpi-hdf">0 م²</div><div class="kpi-lbl">مساحة الظهر HDF</div></div>
+        </div>
+
+        <div class="section-title">📐 جدول قياسات القص الدقيق (بعد خصم السماكة والخلوص)</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>القطعة</th>
+                <th>الطول (سم)</th>
+                <th>العرض (سم)</th>
+                <th>العدد</th>
+                <th>الشريط (م)</th>
+              </tr>
+            </thead>
+            <tbody id="cutlist-tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="section-title">🔩 قائمة الإكسسوارات والملحقات</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>الصنف</th>
+                <th>الكمية</th>
+                <th>ملاحظة هندسية</th>
+              </tr>
+            </thead>
+            <tbody id="hardware-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB 3: 2D SHEET NESTING -->
+      <div id="tab-nesting" class="tab-content">
+        <div class="kpi-grid">
+          <div class="kpi"><div class="kpi-val" id="nest-sheets">0</div><div class="kpi-lbl">عدد الألواح المطلوبة</div></div>
+          <div class="kpi"><div class="kpi-val" id="nest-eff">0%</div><div class="kpi-lbl">كفاءة استغلال اللوح</div></div>
+          <div class="kpi"><div class="kpi-val" id="nest-waste">0%</div><div class="kpi-lbl">نسبة الهدر</div></div>
+          <div class="kpi"><div class="kpi-val" id="nest-size">244×122</div><div class="kpi-lbl">مقاس اللوح (سم)</div></div>
+        </div>
+        <div id="nesting-warning" style="display:none; background:rgba(239,68,68,0.15); border:1px solid #ef4444; padding:10px; border-radius:10px; margin-bottom:12px; font-size:13px;"></div>
+        <div id="nesting-container"></div>
+      </div>
+
+      <!-- TAB 4: QUOTE & EXPORT -->
+      <div id="tab-quote" class="tab-content">
+        <div class="form-grid">
+          <div class="field">
+            <label>اسم الزبون (اختياري لعرض السعر)</label>
+            <input type="text" id="client-name" placeholder="مثلاً: أ. أحمد المحمد" />
+          </div>
+          <div class="field">
+            <label>نوع الخشب المعروض للزبون</label>
+            <input type="text" id="material-label" value="MDF إسباني / ميلامين 18مم" />
+          </div>
+        </div>
+
+        <div class="quote-total-box">
+          <div>
+            <div style="font-size:12px; color:var(--muted);">السعر النهائي المقترح للزبون</div>
+                        <div style="font-size:26px; font-weight:800; color:var(--accent);" id="final-price-display">0 $</div>
+          </div>
+          <div style="text-align:left;">
+            <div style="font-size:12px; color:var(--muted);">التكلفة المباشرة: <strong id="direct-cost-display" style="color:#fff;">0</strong></div>
+            <div style="font-size:12px; color:var(--success);">صافي الربح: <strong id="profit-display">0</strong></div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>بند التكلفة</th>
+                <th>الكمية</th>
+                <th>الإجمالي</th>
+              </tr>
+            </thead>
+            <tbody id="cost-tbody"></tbody>
+          </table>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:12px;">
+          <button class="btn btn-primary" onclick="printDocument('client')">📄 عرض سعر PDF للزبون</button>
+          <button class="btn btn-secondary" onclick="printDocument('workshop')">🏭 أمر قص PDF للورشة</button>
+        </div>
+        <button class="btn btn-success" style="width:100%; margin-top:8px;" onclick="shareWhatsApp()">💬 إرسال ملخص عرض السعر عبر واتساب</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Settings Modal -->
+  <div class="modal-backdrop" id="settings-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <strong>⚙️ إعدادات الورشة والأسعار والمقاسات</strong>
+        <button class="btn btn-danger btn-sm" onclick="closeSettings()">إغلاق</button>
+      </div>
+
+      <div class="section-title">هوية المعمل (تظهر في عرض السعر)</div>
+      <div class="form-grid">
+        <div class="field"><label>اسم المعمل / الورشة</label><input type="text" id="set-brand" /></div>
+        <div class="field"><label>رقم الهاتف / واتساب</label><input type="text" id="set-phone" /></div>
+      </div>
+
+      <div class="section-title">مواصفات اللوح والقص</div>
+      <div class="form-grid-3">
+        <div class="field"><label>طول اللوح (سم)</label><input type="number" id="set-sw" /></div>
+        <div class="field"><label>عرض اللوح (سم)</label><input type="number" id="set-sh" /></div>
+        <div class="field"><label>سماكة الخشب (سم)</label><input type="number" step="0.1" id="set-thick" /></div>
+      </div>
+      <div class="form-grid">
+        <div class="field"><label>سماكة المنشار Kerf (سم)</label><input type="number" step="0.1" id="set-kerf" /></div>
+        <div class="field"><label>العملة</label><input type="text" id="set-curr" /></div>
+      </div>
+
+      <div class="section-title">الأسعار والتسعير</div>
+      <div class="form-grid-3">
+        <div class="field"><label>سعر لوح الخشب</label><input type="number" id="set-p-sheet" /></div>
+        <div class="field"><label>سعر متر الظهر HDF</label><input type="number" id="set-p-hdf" /></div>
+        <div class="field"><label>سعر متر الشريط</label><input type="number" step="0.1" id="set-p-edge" /></div>
+      </div>
+      <div class="form-grid-3">
+        <div class="field"><label>سعر المفصلة</label><input type="number" step="0.5" id="set-p-hinge" /></div>
+        <div class="field"><label>سعر طقم السكك</label><input type="number" step="0.5" id="set-p-slide" /></div>
+        <div class="field"><label>سعر المقبض/الأرجل</label><input type="number" step="0.5" id="set-p-misc" /></div>
+      </div>
+      <div class="form-grid">
+        <div class="field"><label>سعر متر الرخامة الطولي</label><input type="number" id="set-p-counter" /></div>
+        <div class="field"><label>هامش المصنعية والربح (%)</label><input type="number" id="set-margin" /></div>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%; margin-top:10px;" onclick="saveSettings()">💾 حفظ وتحديث الحسابات</button>
+    </div>
+  </div>
+
+  <!-- Dedicated Native Print Area for iPhone/Desktop PDF -->
+  <div id="print-area"></div>
+
+<script>
+  // ================== 1. CONFIG & STATE ==================
+  const DEFAULT_CONFIG = {
+    brand: 'KitchenPro 3D',
+    phone: '',
+    currency: '$',
+    sheetW: 244,
+    sheetH: 122,
+    thickness: 1.8,
+    kerf: 0.4,
+    priceSheet: 45,
+    priceHdfM2: 6,
+    priceEdgeM: 0.5,
+    priceHinge: 2.5,
+    priceSlide: 12,
+    priceMisc: 2,
+    priceCounterM: 85,
+    marginPct: 40
+  };
+
+  const COLORS = [
+    { name: 'أبيض مطفي', hex: '#f1f5f9', body: '#e2e8f0' },
+    { name: 'رمادي فحمي', hex: '#334155', body: '#cbd5e1' },
+    { name: 'خشبي جوزي', hex: '#6b4423', body: '#d6c7b2' },
+    { name: 'كشمير دافئ', hex: '#c8b6a6', body: '#f1f5f9' },
+    { name: 'بلوط طبيعي', hex: '#c19a6b', body: '#f8fafc' },
+    { name: 'أزرق ملكي', hex: '#1e3a5f', body: '#e2e8f0' },
+    { name: 'أخضر زيتوني', hex: '#4a5d4e', body: '#e2e8f0' }
+  ];
+
+  let config = loadConfig();
+  let units = [
+    { id: Date.now(), type: 'base', name: 'خزانة سفلية', w: 80, h: 72, d: 56, doors: 2, shelves: 1, drawers: 0, plinth: 10, counter: 1, qty: 1, colorIdx: 2 }
+  ];
+  let activeUnitId = units[0].id;
+  let doorsOpen = false;
+  let xrayMode = false;
+  let lastCalc = null;
+
+  function loadConfig() {
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem('kp3d_config') || '{}'); } catch(e) {}
+    const merged = { ...DEFAULT_CONFIG, ...saved };
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('brand')) merged.brand = params.get('brand').replace(/_/g, ' ');
+    if (params.get('phone')) merged.phone = params.get('phone');
+    if (params.get('currency')) merged.currency = params.get('currency');
+    return merged;
+  }
+
+  function applyBrandUI() {
+    document.getElementById('brand-name-display').textContent = config.brand;
+    document.getElementById('brand-logo-letter').textContent = config.brand.trim().charAt(0).toUpperCase();
+    document.getElementById('brand-sub-display').textContent = config.phone ? `للتواصل: ${config.phone}` : 'محرك تصميم المطابخ وقص الألواح';
+  }
+
+  // ================== 2. THREE.JS 3D ENGINE (iOS OPTIMIZED) ==================
+  let scene, camera, renderer, controls, cabinetGroup;
+
+  function init3D() {
+    const container = document.getElementById('canvas-container');
+    scene = new THREE.Scene();
+
+    camera = new THREE.PerspectiveCamera(42, container.clientWidth / container.clientHeight, 1, 2000);
+    camera.position.set(135, 115, 175);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.maxDistance = 450;
+    controls.minDistance = 60;
+    controls.target.set(0, 45, 0);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.72));
+    const dirLight = new THREE.DirectionalLight(0xfffbeb, 0.75);
+    dirLight.position.set(120, 200, 140);
+    scene.add(dirLight);
+    const fillLight = new THREE.DirectionalLight(0x93c5fd, 0.35);
+    fillLight.position.set(-120, 80, -100);
+    scene.add(fillLight);
+
+    const grid = new THREE.GridHelper(260, 13, 0x475569, 0x1e293b);
+    scene.add(grid);
+
+    cabinetGroup = new THREE.Group();
+    scene.add(cabinetGroup);
+
+    window.addEventListener('resize', onResize);
+    animate();
+  }
+
+  function onResize() {
+    const container = document.getElementById('canvas-container');
+    if (!container || !renderer) return;
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+
+  function disposeGroup(group) {
+    while (group.children.length > 0) {
+      const obj = group.children[0];
+      if (obj.geometry) obj.geometry.dispose();
+      if (obj.material) {
+        if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+        else obj.material.dispose();
+      }
+      if (obj.children && obj.children.length) disposeGroup(obj);
+      group.remove(obj);
+    }
+  }
+
+  function build3DCabinet(u) {
+    disposeGroup(cabinetGroup);
+    const T = config.thickness;
+    const W = u.w, H = u.h, D = u.d;
+    const plinth = (u.type === 'wall') ? 0 : u.plinth;
+    const yOffset = (u.type === 'wall') ? 45 : plinth;
+    const pal = COLORS[u.colorIdx] || COLORS[0];
+
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color: pal.body, roughness: 0.6, transparent: xrayMode, opacity: xrayMode ? 0.38 : 1
+    });
+    const doorMat = new THREE.MeshStandardMaterial({
+      color: pal.hex, roughness: 0.45, metalness: 0.05, transparent: xrayMode, opacity: xrayMode ? 0.28 : 1
+    });
+    const backMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.8 });
+    const handleMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.8, roughness: 0.25 });
+    const counterMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.25, metalness: 0.15 });
+    const legMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.7 });
+
+    function addBox(w, h, d, x, y, z, mat, parent = cabinetGroup) {
+      const geo = new THREE.BoxGeometry(w, h, d);
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(x, y, z);
+      const edges = new THREE.EdgesGeometry(geo);
+      const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x0f172a, transparent: true, opacity: 0.32 }));
+      mesh.add(line);
+      parent.add(mesh);
+      return mesh;
+    }
+
+    addBox(T, H, D, -W/2 + T/2, yOffset + H/2, 0, bodyMat);
+    addBox(T, H, D,  W/2 - T/2, yOffset + H/2, 0, bodyMat);
+
+    const innerW = W - 2 * T;
+    addBox(innerW, T, D, 0, yOffset + T/2, 0, bodyMat);
+
+    if (u.type === 'base' || u.type === 'drawers') {
+      addBox(innerW, T, 10, 0, yOffset + H - T/2, D/2 - 5, bodyMat);
+      addBox(innerW, T, 10, 0, yOffset + H - T/2, -D/2 + 5, bodyMat);
+    } else {
+      addBox(innerW, T, D, 0, yOffset + H - T/2, 0, bodyMat);
+    }
+
+    addBox(W - 0.6, H - 0.6, 0.5, 0, yOffset + H/2, -D/2 + 0.25, backMat);
+
+    if (u.shelves > 0) {
+      const step = (H - 2 * T) / (u.shelves + 1);
+      for (let i = 1; i <= u.shelves; i++) {
+        addBox(innerW - 0.2, T, D - 2, 0, yOffset + T + step * i, -1, bodyMat);
+      }
+    }
+
+    if (plinth > 0) {
+      const legPos = [
+        [-W/2 + 6, plinth/2,  D/2 - 8],
+        [ W/2 - 6, plinth/2,  D/2 - 8],
+        [-W/2 + 6, plinth/2, -D/2 + 8],
+        [ W/2 - 6, plinth/2, -D/2 + 8]
+      ];
+      legPos.forEach(p => addBox(4, plinth, 4, p[0], p[1], p[2], legMat));
+      addBox(W - 2, plinth, T, 0, plinth/2, D/2 - 5, doorMat);
+    }
+
+    if ((u.type === 'base' || u.type === 'drawers') && u.counter == 1) {
+      addBox(W + 1, 3.8, D + 4, 0, yOffset + H + 1.9, 2, counterMat);
+    }
+
+    if (u.drawers > 0) {
+      const gap = 0.3;
+      const drH = (H - gap * (u.drawers + 1)) / u.drawers;
+      for (let i = 0; i < u.drawers; i++) {
+        const yPos = yOffset + gap + drH/2 + i * (drH + gap);
+        const pull = doorsOpen ? (i === u.drawers - 1 ? 22 : 10) : 0;
+        addBox(W - 0.3, drH, T, 0, yPos, D/2 + T/2 + pull, doorMat);
+        addBox(14, 1.2, 1.8, 0, yPos, D/2 + T + 0.9 + pull, handleMat);
+      }
+    } else if (u.doors > 0) {
+      const gap = 0.3;
+      const doorH = H - gap;
+      if (u.doors == 1) {
+        const doorW = W - gap;
+        const pivot = new THREE.Group();
+        pivot.position.set(-W/2 + gap/2, yOffset + H/2, D/2 + T/2);
+        addBox(doorW, doorH, T, doorW/2, 0, 0, doorMat, pivot);
+        addBox(1.2, 14, 1.8, doorW - 4, u.type === 'wall' ? -doorH/2 + 12 : doorH/2 - 12, T/2 + 0.9, handleMat, pivot);
+        if (doorsOpen) pivot.rotation.y = -Math.PI * 0.48;
+        cabinetGroup.add(pivot);
+      } else {
+        const doorW = (W / 2) - gap;
+        const pL = new THREE.Group();
+        pL.position.set(-W/2 + gap/2, yOffset + H/2, D/2 + T/2);
+        addBox(doorW, doorH, T, doorW/2, 0, 0, doorMat, pL);
+        addBox(1.2, 14, 1.8, doorW - 3.5, u.type === 'wall' ? -doorH/2 + 12 : doorH/2 - 12, T/2 + 0.9, handleMat, pL);
+        if (doorsOpen) pL.rotation.y = -Math.PI * 0.48;
+        cabinetGroup.add(pL);
+
+        const pR = new THREE.Group();
+        pR.position.set(W/2 - gap/2, yOffset + H/2, D/2 + T/2);
+        addBox(doorW, doorH, T, -doorW/2, 0, 0, doorMat, pR);
+        addBox(1.2, 14, 1.8, -doorW + 3.5, u.type === 'wall' ? -doorH/2 + 12 : doorH/2 - 12, T/2 + 0.9, handleMat, pR);
+        if (doorsOpen) pR.rotation.y = Math.PI * 0.48;
+        cabinetGroup.add(pR);
+      }
+    }
+
+    controls.target.set(0, yOffset + H/2, 0);
+  }
+
+  // ================== 3. CARPENTRY CUT-LIST & 2D NESTING ENGINE ==================
+  function calculateProject() {
+    const T = config.thickness;
+    const pieces = [];
+    let hdfAreaM2 = 0;
+    let totalEdgeM = 0;
+    let totalHinges = 0;
+    let totalSlides = 0;
+    let totalHandles = 0;
+    let totalLegs = 0;
+    let totalCounterM = 0;
+
+    function pushPiece(label, l, w, qty, edgeL, edgeW) {
+      const L = Math.round(l * 10) / 10;
+      const W = Math.round(w * 10) / 10;
+      if (L <= 0 || W <= 0 || qty <= 0) return;
+      const edgePerPieceM = ((edgeL * L) + (edgeW * W)) / 100;
+      totalEdgeM += edgePerPieceM * qty;
+      pieces.push({ label, l: L, w: W, qty, edgeM: edgePerPieceM * qty });
+    }
+
+    units.forEach((u, idx) => {
+      const tag = `و${idx + 1}`;
+      const q = u.qty;
+      const innerW = u.w - 2 * T;
+
+      pushPiece(`${tag} - جانب`, u.h, u.d, 2 * q, 1, 0);
+      pushPiece(`${tag} - قاعدة`, innerW, u.d, 1 * q, 1, 0);
+
+      if (u.type === 'base' || u.type === 'drawers') {
+        pushPiece(`${tag} - عارضة علوية`, innerW, 10, 2 * q, 1, 0);
+        if (u.counter == 1) totalCounterM += (u.w / 100) * q;
+      } else {
+        pushPiece(`${tag} - سقف`, innerW, u.d, 1 * q, 1, 0);
+      }
+
+      if (u.shelves > 0) {
+        pushPiece(`${tag} - رف داخلي`, innerW - 0.2, u.d - 2, u.shelves * q, 1, 0);
+      }
+
+      if (u.type !== 'wall' && u.plinth > 0) {
+        pushPiece(`${tag} - وزرة سفلية`, u.w - 2, u.plinth, 1 * q, 2, 0);
+        totalLegs += 4 * q;
+      }
+
+      hdfAreaM2 += ((u.w - 0.4) * (u.h - 0.4) / 10000) * q;
+
+      if (u.drawers > 0) {
+        const gap = 0.3;
+        const drFaceH = (u.h - gap * (u.drawers + 1)) / u.drawers;
+        const drBoxH = Math.max(10, drFaceH - 4);
+        const drDepth = Math.max(30, u.d - 6);
+        const drInnerW = innerW - 2.6 - 2 * T;
+
+        pushPiece(`${tag} - واجهة درج`, u.w - 0.3, drFaceH, u.drawers * q, 2, 2);
+        pushPiece(`${tag} - جانب درج`, drDepth, drBoxH, 2 * u.drawers * q, 1, 0);
+        pushPiece(`${tag} - ظهر/مقدمة درج`, drInnerW, drBoxH, 2 * u.drawers * q, 1, 0);
+        hdfAreaM2 += ((drInnerW + T) * drDepth / 10000) * u.drawers * q;
+
+        totalSlides += u.drawers * q;
+        totalHandles += u.drawers * q;
+      } else if (u.doors > 0) {
+        const doorW = (u.doors == 1) ? (u.w - 0.3) : ((u.w / 2) - 0.3);
+        const doorH = u.h - 0.3;
+        pushPiece(`${tag} - باب`, doorH, doorW, u.doors * q, 2, 2);
+
+        const hingesPerDoor = doorH > 160 ? 4 : (doorH > 95 ? 3 : 2);
+        totalHinges += hingesPerDoor * u.doors * q;
+        totalHandles += u.doors * q;
+      }
+    });
+
+    const nesting = packSheets(pieces, config.sheetW, config.sheetH, config.kerf);
+
+    const costSheets = nesting.sheets.length * config.priceSheet;
+    const costHdf = hdfAreaM2 * config.priceHdfM2;
+    const costEdge = totalEdgeM * config.priceEdgeM;
+    const costHinges = totalHinges * config.priceHinge;
+    const costSlides = totalSlides * config.priceSlide;
+    const costMisc = (totalHandles + totalLegs) * config.priceMisc;
+    const costCounter = totalCounterM * config.priceCounterM;
+
+    const directCost = costSheets + costHdf + costEdge + costHinges + costSlides + costMisc + costCounter;
+    const profit = directCost * (config.marginPct / 100);
+    const finalPrice = directCost + profit;
+
+    lastCalc = {
+      pieces, nesting, hdfAreaM2, totalEdgeM,
+      totalHinges, totalSlides, totalHandles, totalLegs, totalCounterM,
+      costs: { costSheets, costHdf, costEdge, costHinges, costSlides, costMisc, costCounter, directCost, profit, finalPrice }
+    };
+
+    renderCalculations();
+  }
+
+  function packSheets(piecesList, sheetW, sheetH, kerf) {
+    const rects = [];
+    const oversized = [];
+    piecesList.forEach(p => {
+      for (let i = 0; i < p.qty; i++) {
+        const maxSide = Math.max(p.l, p.w);
+        const minSide = Math.min(p.l, p.w);
+        if (maxSide > Math.max(sheetW, sheetH) || minSide > Math.min(sheetW, sheetH)) {
+          oversized.push(`${p.label} (${p.l}×${p.w})`);
+        } else {
+          rects.push({ label: p.label, l: p.l, w: p.w, area: p.l * p.w });
+        }
+      }
+    });
+
+    rects.sort((a, b) => Math.max(b.l, b.w) - Math.max(a.l, a.w) || b.area - a.area);
+
+    const trim = 1.0;
+    const usableW = sheetW - 2 * trim;
+    const usableH = sheetH - 2 * trim;
+    const sheets = [];
+
+    function createSheet() {
+      return { shelves: [], items: [], usedArea: 0 };
+    }
+
+    rects.forEach(r => {
+      let placed = false;
+      const orientations = [
+        { rw: r.l, rh: r.w, rot: false },
+        { rw: r.w, rh: r.l, rot: true }
+      ];
+
+      for (const sh of sheets) {
+        for (const shelf of sh.shelves) {
+          for (const o of orientations) {
+            if (o.rh <= shelf.h && shelf.x + o.rw <= usableW) {
+              sh.items.push({ x: trim + shelf.x, y: trim + shelf.y, w: o.rw, h: o.rh, label: r.label, rot: o.rot });
+              shelf.x += o.rw + kerf;
+              sh.usedArea += o.rw * o.rh;
+              placed = true;
+              break;
+            }
+          }
+          if (placed) break;
+        }
+        if (placed) break;
+
+        const usedY = sh.shelves.reduce((acc, s) => acc + s.h + kerf, 0);
+        const validO = orientations.filter(o => o.rw <= usableW && usedY + o.rh <= usableH)
+                                   .sort((a, b) => a.rh - b.rh);
+        if (validO.length > 0) {
+          const best = validO[0];
+          const newShelf = { y: usedY, h: best.rh, x: best.rw + kerf };
+          sh.shelves.push(newShelf);
+          sh.items.push({ x: trim, y: trim + usedY, w: best.rw, h: best.rh, label: r.label, rot: best.rot });
+          sh.usedArea += best.rw * best.rh;
+          placed = true;
+          break;
+        }
+      }
+
+      if (!placed) {
+        const sh = createSheet();
+        const best = orientations.filter(o => o.rw <= usableW && o.rh <= usableH)
+                                 .sort((a, b) => a.rh - b.rh)[0] || orientations[0];
+        sh.shelves.push({ y: 0, h: best.rh, x: best.rw + kerf });
+        sh.items.push({ x: trim, y: trim, w: best.rw, h: best.rh, label: r.label, rot: best.rot });
+        sh.usedArea += best.rw * best.rh;
+        sheets.push(sh);
+      }
+    });
+
+    const totalSheetArea = sheets.length * sheetW * sheetH;
+    const totalUsedArea = sheets.reduce((s, sh) => s + sh.usedArea, 0);
+    const eff = totalSheetArea > 0 ? (totalUsedArea / totalSheetArea) * 100 : 0;
+
+    return { sheets, totalUsedAreaM2: totalUsedArea / 10000, eff, waste: Math.max(0, 100 - eff), oversized };
+  }
+
+  // ================== 4. UI RENDERING ==================
+  function renderCalculations() {
+    const c = lastCalc;
+    const cur = config.currency;
+    const totalPieces = c.pieces.reduce((s, p) => s + p.qty, 0);
+
+    document.getElementById('price-badge').textContent = `${Math.round(c.costs.finalPrice).toLocaleString()} ${cur}`;
+    document.getElementById('kpi-pieces').textContent = totalPieces;
+    document.getElementById('kpi-area').textContent = `${c.nesting.totalUsedAreaM2.toFixed(2)} م²`;
+        document.getElementById('kpi-edge').textContent = `${c.totalEdgeM.toFixed(1)} م`;
+    document.getElementById('kpi-hdf').textContent = `${c.hdfAreaM2.toFixed(2)} م²`;
+
+    document.getElementById('cutlist-tbody').innerHTML = c.pieces.map(p => `
+      <tr>
+        <td><strong>${p.label}</strong></td>
+        <td>${p.l}</td>
+        <td>${p.w}</td>
+        <td>${p.qty}</td>
+        <td>${p.edgeM.toFixed(2)}</td>
+      </tr>
+    `).join('');
+
+    document.getElementById('hardware-tbody').innerHTML = `
+      <tr><td>مفصلات هيدروليك</td><td><strong>${c.totalHinges}</strong></td><td>حسب ارتفاع كل باب</td></tr>
+      <tr><td>طقم سكك أدراج (يمين+يسار)</td><td><strong>${c.totalSlides}</strong></td><td>تخليص 2.6 سم</td></tr>
+      <tr><td>مقابض أبواب وأدراج</td><td><strong>${c.totalHandles}</strong></td><td>عدد الفتحات</td></tr>
+      <tr><td>أرجل مطبخ قابلة للضبط</td><td><strong>${c.totalLegs}</strong></td><td>4 لكل وحدة أرضية</td></tr>
+      <tr><td>رخامة / سطح عمل (متر طولي)</td><td><strong>${c.totalCounterM.toFixed(2)} م</strong></td><td>بروز أمامي 4 سم</td></tr>
+    `;
+
+    document.getElementById('nest-sheets').textContent = c.nesting.sheets.length;
+    document.getElementById('nest-eff').textContent = `${c.nesting.eff.toFixed(1)}%`;
+    document.getElementById('nest-waste').textContent = `${c.nesting.waste.toFixed(1)}%`;
+    document.getElementById('nest-size').textContent = `${config.sheetW}×${config.sheetH}`;
+
+    const warnEl = document.getElementById('nesting-warning');
+    if (c.nesting.oversized.length > 0) {
+      warnEl.style.display = 'block';
+      warnEl.textContent = `⚠️ تنبيه: القطع التالية أكبر من مقاس اللوح المحدد: ${c.nesting.oversized.join('، ')}`;
+    } else {
+      warnEl.style.display = 'none';
+    }
+
+    document.getElementById('nesting-container').innerHTML = c.nesting.sheets.map((sh, idx) => {
+      const shEff = ((sh.usedArea / (config.sheetW * config.sheetH)) * 100).toFixed(1);
+      return `
+        <div class="sheet-card">
+          <div class="sheet-header">
+            <span>🪵 اللوح رقم #${idx + 1} (${config.sheetW} × ${config.sheetH} سم)</span>
+            <span style="color:var(--success);">استغلال: ${shEff}% | قطع: ${sh.items.length}</span>
+          </div>
+          ${buildSheetSVG(sh, config.sheetW, config.sheetH)}
+        </div>
+      `;
+    }).join('');
+
+    document.getElementById('final-price-display').textContent = `${Math.round(c.costs.finalPrice).toLocaleString()} ${cur}`;
+    document.getElementById('direct-cost-display').textContent = `${Math.round(c.costs.directCost).toLocaleString()} ${cur}`;
+    document.getElementById('profit-display').textContent = `${Math.round(c.costs.profit).toLocaleString()} ${cur}`;
+
+    document.getElementById('cost-tbody').innerHTML = `
+      <tr><td>ألواح الخشب (${config.thickness} سم)</td><td>${c.nesting.sheets.length} لوح</td><td>${c.costs.costSheets.toFixed(1)} ${cur}</td></tr>
+      <tr><td>ألواح الظهر HDF</td><td>${c.hdfAreaM2.toFixed(2)} م²</td><td>${c.costs.costHdf.toFixed(1)} ${cur}</td></tr>
+      <tr><td>شريط الحواف PVC</td><td>${c.totalEdgeM.toFixed(1)} م</td><td>${c.costs.costEdge.toFixed(1)} ${cur}</td></tr>
+      <tr><td>مفصلات هيدروليك</td><td>${c.totalHinges} قطعة</td><td>${c.costs.costHinges.toFixed(1)} ${cur}</td></tr>
+      <tr><td>سكك أدراج</td><td>${c.totalSlides} طقم</td><td>${c.costs.costSlides.toFixed(1)} ${cur}</td></tr>
+      <tr><td>مقابض وأرجل</td><td>${c.totalHandles + c.totalLegs} قطعة</td><td>${c.costs.costMisc.toFixed(1)} ${cur}</td></tr>
+      <tr><td>الرخامة العلوية</td><td>${c.totalCounterM.toFixed(2)} م</td><td>${c.costs.costCounter.toFixed(1)} ${cur}</td></tr>
+      <tr style="background:rgba(245,158,11,0.1);"><td><strong>المصنعية والتركيب والربح (${config.marginPct}%)</strong></td><td>—</td><td><strong>${c.costs.profit.toFixed(1)} ${cur}</strong></td></tr>
+    `;
+  }
+
+  function buildSheetSVG(sheet, W, H, isPrint = false) {
+    const bg = isPrint ? '#f8fafc' : '#172033';
+    const stroke = isPrint ? '#0f172a' : '#f59e0b';
+    const fill = isPrint ? '#e2e8f0' : 'rgba(245, 158, 11, 0.22)';
+    const txtColor = isPrint ? '#0f172a' : '#f8fafc';
+
+    const rects = sheet.items.map(it => {
+      const fs = Math.max(4.5, Math.min(it.w, it.h) * 0.22);
+      const showLabel = it.w > 18 && it.h > 10;
+      return `
+        <rect x="${it.x}" y="${it.y}" width="${it.w}" height="${it.h}" fill="${fill}" stroke="${stroke}" stroke-width="0.6" />
+        ${showLabel ? `<text x="${it.x + it.w/2}" y="${it.y + it.h/2}" fill="${txtColor}" font-size="${fs}" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Cairo">${it.w}×${it.h}</text>` : ''}
+      `;
+    }).join('');
+
+    return `<svg class="sheet-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="${W}" height="${H}" fill="${bg}" stroke="#64748b" stroke-width="1" />
+      ${rects}
+    </svg>`;
+  }
+
+  // ================== 5. INTERACTIONS & UNITS ==================
+  function renderSwatches() {
+    const activeU = getActiveUnit();
+    document.getElementById('color-swatches').innerHTML = COLORS.map((c, i) => `
+      <div class="swatch ${activeU.colorIdx === i ? 'active' : ''}" title="${c.name}"
+           style="background:${c.hex};" onclick="selectColor(${i})"></div>
+    `).join('');
+  }
+
+  function selectColor(idx) {
+    const u = getActiveUnit();
+    u.colorIdx = idx;
+    renderSwatches();
+    build3DCabinet(u);
+  }
+
+  function getActiveUnit() {
+    return units.find(u => u.id === activeUnitId) || units[0];
+  }
+
+  function loadUnitToForm(u) {
+    document.getElementById('u-type').value = u.type;
+    document.getElementById('u-qty').value = u.qty;
+    document.getElementById('u-w').value = u.w;
+    document.getElementById('u-h').value = u.h;
+    document.getElementById('u-d').value = u.d;
+    document.getElementById('u-doors').value = u.doors;
+    document.getElementById('u-shelves').value = u.shelves;
+    document.getElementById('u-drawers').value = u.drawers;
+    document.getElementById('u-plinth').value = u.plinth;
+    document.getElementById('u-counter').value = u.counter;
+    document.getElementById('dim-badge').textContent = `${u.w} × ${u.h} × ${u.d} سم`;
+    renderSwatches();
+    build3DCabinet(u);
+  }
+
+  function onTypeChange() {
+    const t = document.getElementById('u-type').value;
+    if (t === 'base') {
+      setVals(80, 72, 56, 2, 1, 0, 10, 1);
+    } else if (t === 'wall') {
+      setVals(80, 70, 34, 2, 2, 0, 0, 0);
+    } else if (t === 'tall') {
+      setVals(60, 210, 58, 1, 5, 0, 10, 0);
+    } else if (t === 'drawers') {
+      setVals(80, 72, 56, 0, 0, 3, 10, 1);
+    }
+    updateCurrentUnit();
+  }
+
+  function setVals(w, h, d, doors, shelves, drawers, plinth, counter) {
+    document.getElementById('u-w').value = w;
+    document.getElementById('u-h').value = h;
+    document.getElementById('u-d').value = d;
+    document.getElementById('u-doors').value = doors;
+    document.getElementById('u-shelves').value = shelves;
+    document.getElementById('u-drawers').value = drawers;
+    document.getElementById('u-plinth').value = plinth;
+    document.getElementById('u-counter').value = counter;
+  }
+
+  const TYPE_NAMES = { base: 'خزانة سفلية', wall: 'خزانة علوية', tall: 'خزانة عمودية', drawers: 'وحدة أدراج' };
+
+  function updateCurrentUnit() {
+    const u = getActiveUnit();
+    u.type = document.getElementById('u-type').value;
+    u.name = TYPE_NAMES[u.type];
+    u.qty = Math.max(1, parseInt(document.getElementById('u-qty').value) || 1);
+    u.w = Math.max(20, parseFloat(document.getElementById('u-w').value) || 60);
+    u.h = Math.max(20, parseFloat(document.getElementById('u-h').value) || 72);
+    u.d = Math.max(20, parseFloat(document.getElementById('u-d').value) || 56);
+    u.doors = parseInt(document.getElementById('u-doors').value) || 0;
+    u.shelves = Math.max(0, parseInt(document.getElementById('u-shelves').value) || 0);
+    u.drawers = Math.max(0, parseInt(document.getElementById('u-drawers').value) || 0);
+    u.plinth = Math.max(0, parseFloat(document.getElementById('u-plinth').value) || 0);
+    u.counter = parseInt(document.getElementById('u-counter').value) || 0;
+
+    document.getElementById('dim-badge').textContent = `${u.w} × ${u.h} × ${u.d} سم`;
+    build3DCabinet(u);
+    renderUnitList();
+    calculateProject();
+  }
+
+  function addUnitToProject() {
+    const cur = getActiveUnit();
+    const copy = { ...cur, id: Date.now() };
+    units.push(copy);
+    activeUnitId = copy.id;
+    renderUnitList();
+    loadUnitToForm(copy);
+    calculateProject();
+  }
+
+  function selectUnit(id) {
+    activeUnitId = id;
+    renderUnitList();
+    loadUnitToForm(getActiveUnit());
+  }
+
+  function deleteUnit(id, e) {
+    e.stopPropagation();
+    if (units.length === 1) return;
+    units = units.filter(u => u.id !== id);
+    if (activeUnitId === id) activeUnitId = units[0].id;
+    renderUnitList();
+    loadUnitToForm(getActiveUnit());
+    calculateProject();
+  }
+
+  function clearProject() {
+    units = [{ id: Date.now(), type: 'base', name: 'خزانة سفلية', w: 80, h: 72, d: 56, doors: 2, shelves: 1, drawers: 0, plinth: 10, counter: 1, qty: 1, colorIdx: 2 }];
+    activeUnitId = units[0].id;
+    renderUnitList();
+    loadUnitToForm(units[0]);
+    calculateProject();
+  }
+
+  function renderUnitList() {
+    document.getElementById('units-count').textContent = units.reduce((s, u) => s + u.qty, 0);
+    document.getElementById('unit-list').innerHTML = units.map((u, i) => `
+      <div class="unit-item ${u.id === activeUnitId ? 'active-unit' : ''}" onclick="selectUnit(${u.id})">
+        <div>
+          <div class="unit-title">و${i + 1}: ${u.name} ${u.qty > 1 ? `(×${u.qty})` : ''}</div>
+          <div class="unit-meta">${u.w}×${u.h}×${u.d} سم | ${u.drawers > 0 ? u.drawers + ' أدراج' : u.doors + ' أبواب'} | ${u.shelves} رف</div>
+        </div>
+        ${units.length > 1 ? `<button class="btn btn-danger btn-sm" onclick="deleteUnit(${u.id}, event)">✕</button>` : ''}
+      </div>
+    `).join('');
+  }
+
+  function toggleDoors() {
+    doorsOpen = !doorsOpen;
+    document.getElementById('btn-doors').textContent = doorsOpen ? '🚪 إغلاق الأبواب' : '🚪 فتح الأبواب';
+    build3DCabinet(getActiveUnit());
+  }
+
+  function toggleXray() {
+    xrayMode = !xrayMode;
+    document.getElementById('btn-xray').textContent = xrayMode ? '🧱 عرض صلب' : '👁️ شفافية';
+    build3DCabinet(getActiveUnit());
+  }
+
+  function resetCamera() {
+    camera.position.set(135, 115, 175);
+    controls.update();
+  }
+
+  function switchTab(id, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + id).classList.add('active');
+  }
+
+  // ================== 6. SETTINGS, PDF PRINT & WHATSAPP ==================
+  function openSettings() {
+    document.getElementById('set-brand').value = config.brand;
+    document.getElementById('set-phone').value = config.phone;
+    document.getElementById('set-sw').value = config.sheetW;
+    document.getElementById('set-sh').value = config.sheetH;
+    document.getElementById('set-thick').value = config.thickness;
+    document.getElementById('set-kerf').value = config.kerf;
+    document.getElementById('set-curr').value = config.currency;
+    document.getElementById('set-p-sheet').value = config.priceSheet;
+    document.getElementById('set-p-hdf').value = config.priceHdfM2;
+    document.getElementById('set-p-edge').value = config.priceEdgeM;
+    document.getElementById('set-p-hinge').value = config.priceHinge;
+    document.getElementById('set-p-slide').value = config.priceSlide;
+    document.getElementById('set-p-misc').value = config.priceMisc;
+    document.getElementById('set-p-counter').value = config.priceCounterM;
+    document.getElementById('set-margin').value = config.marginPct;
+    document.getElementById('settings-modal').classList.add('open');
+  }
+
+  function closeSettings() {
+    document.getElementById('settings-modal').classList.remove('open');
+  }
+
+  function saveSettings() {
+    config.brand = document.getElementById('set-brand').value.trim() || DEFAULT_CONFIG.brand;
+    config.phone = document.getElementById('set-phone').value.trim();
+    config.sheetW = parseFloat(document.getElementById('set-sw').value) || 244;
+    config.sheetH = parseFloat(document.getElementById('set-sh').value) || 122;
+    config.thickness = parseFloat(document.getElementById('set-thick').value) || 1.8;
+    config.kerf = parseFloat(document.getElementById('set-kerf').value) || 0.4;
+    config.currency = document.getElementById('set-curr').value.trim() || '$';
+    config.priceSheet = parseFloat(document.getElementById('set-p-sheet').value) || 0;
+    config.priceHdfM2 = parseFloat(document.getElementById('set-p-hdf').value) || 0;
+    config.priceEdgeM = parseFloat(document.getElementById('set-p-edge').value) || 0;
+    config.priceHinge = parseFloat(document.getElementById('set-p-hinge').value) || 0;
+    config.priceSlide = parseFloat(document.getElementById('set-p-slide').value) || 0;
+    config.priceMisc = parseFloat(document.getElementById('set-p-misc').value) || 0;
+    config.priceCounterM = parseFloat(document.getElementById('set-p-counter').value) || 0;
+    config.marginPct = parseFloat(document.getElementById('set-margin').value) || 0;
+
+    localStorage.setItem('kp3d_config', JSON.stringify(config));
+    applyBrandUI();
+    build3DCabinet(getActiveUnit());
+    calculateProject();
+    closeSettings();
+  }
+
+  function printDocument(mode) {
+    const c = lastCalc;
+    const cur = config.currency;
+    const client = document.getElementById('client-name').value || 'عميلنا الكريم';
+    const matLabel = document.getElementById('material-label').value;
+    const dateStr = new Date().toLocaleDateString('ar-EG');
+
+    let html = `
+      <div style="display:flex; justify-content:space-between; border-bottom:2px solid #0f172a; padding-bottom:10px; margin-bottom:16px;">
+        <div>
+          <h2 style="margin:0;">${config.brand}</h2>
+          <div style="font-size:13px;">${config.phone ? 'هاتف: ' + config.phone : ''}</div>
+        </div>
+        <div style="text-align:left; font-size:13px;">
+          <div><strong>${mode === 'client' ? 'عرض سعر تفصيل مطبخ' : 'أمر عمل وقائمة قص للورشة'}</strong></div>
+          <div>التاريخ: ${dateStr}</div>
+        </div>
+      </div>
+    `;
+
+    if (mode === 'client') {
+      html += `
+        <p><strong>السيد/ة:</strong> ${client} &nbsp;|&nbsp; <strong>الخامة:</strong> ${matLabel}</p>
+        <h3>تفاصيل الوحدات المشمولة:</h3>
+        <table>
+          <thead><tr><th>#</th><th>الوحدة</th><th>الأبعاد (سم)</th><th>المواصفات</th><th>العدد</th></tr></thead>
+          <tbody>
+            ${units.map((u, i) => `
+              <tr>
+                <td>${i+1}</td>
+                <td>${u.name}</td>
+                <td>${u.w} × ${u.h} × ${u.d}</td>
+                <td>${u.drawers > 0 ? u.drawers + ' أدراج' : u.doors + ' أبواب'}، ${u.shelves} رف</td>
+                <td>${u.qty}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div style="margin-top:18px; padding:14px; border:2px solid #0f172a; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+          <strong style="font-size:18px;">الإجمالي النهائي (شامل التصنيع والتركيب):</strong>
+          <strong style="font-size:22px;">${Math.round(c.costs.finalPrice).toLocaleString()} ${cur}</strong>
+        </div>
+      `;
+    } else {
+      html += `
+        <p><strong>عدد الألواح المطلوبة:</strong> ${c.nesting.sheets.length} لوح (${config.sheetW}×${config.sheetH} سم) | <strong>شريط PVC:</strong> ${c.totalEdgeM.toFixed(1)} م | <strong>الظهر HDF:</strong> ${c.hdfAreaM2.toFixed(2)} م²</p>
+        <h3>1. جدول القص الدقيق:</h3>
+        <table>
+          <thead><tr><th>القطعة</th><th>الطول (سم)</th><th>العرض (سم)</th><th>العدد</th><th>الشريط (م)</th></tr></thead>
+          <tbody>
+            ${c.pieces.map(p => `<tr><td>${p.label}</td><td>${p.l}</td><td>${p.w}</td><td>${p.qty}</td><td>${p.edgeM.toFixed(2)}</td></tr>`).join('')}
+          </tbody>
+        </table>
+        <h3 style="margin-top:16px;">2. خرائط قص الألواح:</h3>
+        ${c.nesting.sheets.map((sh, i) => `
+          <div class="print-sheet">
+            <div style="font-weight:700; margin-bottom:4px;">اللوح #${i+1} (${config.sheetW}×${config.sheetH} سم)</div>
+            ${buildSheetSVG(sh, config.sheetW, config.sheetH, true)}
+          </div>
+        `).join('')}
+      `;
+    }
+
+    document.getElementById('print-area').innerHTML = html;
+    window.print();
+  }
+
+  function shareWhatsApp() {
+    const c = lastCalc;
+    const cur = config.currency;
+    const client = document.getElementById('client-name').value || 'عميلنا الكريم';
+    const matLabel = document.getElementById('material-label').value;
+    const unitLines = units.map((u, i) => `• ${u.name} (${u.w}×${u.h}×${u.d} سم) × ${u.qty}`).join('\n');
+
+    const msg = `*عرض سعر تفصيل مطبخ — ${config.brand}*\n` +
+      `مرحباً ${client}، إليك تفاصيل العرض:\n\n` +
+      `*الوحدات:*\n${unitLines}\n\n` +
+      `*الخامة:* ${matLabel}\n` +
+      `*الإجمالي النهائي:* ${Math.round(c.costs.finalPrice).toLocaleString()} ${cur}\n` +
+      (config.phone ? `\nللتأكيد والتواصل: ${config.phone}` : '');
+
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+  }
+
+  // ================== BOOT ==================
+  applyBrandUI();
+  init3D();
+  renderUnitList();
+  loadUnitToForm(units[0]);
+  calculateProject();
+</script>
+</body>
+</html>
