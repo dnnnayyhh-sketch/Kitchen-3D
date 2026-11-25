@@ -4,8 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>KitchenPro 3D | محرك تصميم المطابخ وقص الألواح</title>
+  <title>KitchenPro 3D Studio | استوديو تصميم المطابخ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -13,1685 +12,1196 @@
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <style>
     :root {
-      --bg: #0f172a;
-      --panel: #1e293b;
-      --panel-light: #273449;
+      --bg: #0b1120;
+      --panel: #162033;
+      --panel-2: #1e293b;
       --border: #334155;
       --text: #f8fafc;
       --muted: #94a3b8;
       --accent: #f59e0b;
-      --accent-hover: #d97706;
       --success: #10b981;
       --danger: #ef4444;
-      --radius: 14px;
     }
-
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
     html, body {
-      margin: 0;
-      padding: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Cairo', sans-serif;
-      min-height: 100dvh;
-      overflow-x: hidden;
+      margin: 0; padding: 0; background: var(--bg); color: var(--text);
+      font-family: 'Cairo', sans-serif; min-height: 100dvh; overflow-x: hidden;
     }
 
     /* Header */
     .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 40;
-      background: rgba(15, 23, 42, 0.92);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(11, 17, 32, 0.94); backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
-      padding: 10px 14px;
-      padding-top: max(10px, env(safe-area-inset-top));
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+      padding: 8px 12px; padding-top: max(8px, env(safe-area-inset-top));
+      display: flex; align-items: center; justify-content: space-between;
     }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+    .brand { display: flex; align-items: center; gap: 9px; }
     .brand-logo {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
+      width: 34px; height: 34px; border-radius: 9px;
       background: linear-gradient(135deg, var(--accent), #b45309);
-      display: grid;
-      place-items: center;
-      font-weight: 800;
-      font-size: 18px;
-      color: #0f172a;
-      flex-shrink: 0;
+      display: grid; place-items: center; font-weight: 800; color: #0b1120;
     }
-    .brand h1 {
-      margin: 0;
-      font-size: 16px;
-      font-weight: 800;
-      line-height: 1.2;
-    }
-    .brand span {
-      font-size: 11px;
-      color: var(--muted);
-      display: block;
-    }
+    .brand h1 { margin: 0; font-size: 15px; font-weight: 800; line-height: 1.2; }
+    .brand span { font-size: 11px; color: var(--muted); display: block; }
 
-    .top-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .btn {
-      border: none;
-      border-radius: 10px;
-      padding: 9px 14px;
-      font-family: inherit;
-      font-weight: 700;
-      font-size: 13px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: 0.18s ease;
-    }
-    .btn-primary { background: var(--accent); color: #0f172a; }
-    .btn-primary:active { transform: scale(0.97); background: var(--accent-hover); }
-    .btn-secondary { background: var(--panel-light); color: var(--text); border: 1px solid var(--border); }
-    .btn-success { background: var(--success); color: #052e16; }
-    .btn-danger { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.35); }
-    .btn-sm { padding: 6px 10px; font-size: 12px; }
-
-    /* Main Layout */
-    .app-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 14px;
-      padding: 12px;
-      max-width: 1480px;
-      margin: 0 auto;
+    /* Layout */
+    .layout {
+      max-width: 1460px; margin: 0 auto; padding: 10px;
+      display: grid; grid-template-columns: 1fr; gap: 10px;
       padding-bottom: max(24px, env(safe-area-inset-bottom));
     }
-
     @media (min-width: 1024px) {
-      .app-grid {
-        grid-template-columns: 440px 1fr;
-        align-items: start;
-      }
-      .viewport-sticky {
-        position: sticky;
-        top: 74px;
-      }
+      .layout { grid-template-columns: 460px 1fr; align-items: start; }
+      .sticky-3d { position: sticky; top: 64px; }
     }
 
-    /* 3D Canvas Card */
-    .canvas-card {
-      background: radial-gradient(circle at top, #1e293b 0%, #0b1120 100%);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      position: relative;
+    /* 3D Viewport */
+    .viewport-card {
+      background: #0f172a; border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden; position: relative;
     }
-
     #canvas-container {
-      width: 100%;
-      height: 330px;
-      touch-action: none; /* Critical for iPhone 3D Orbit */
-      position: relative;
+      width: 100%; height: 310px; touch-action: none; position: relative;
     }
-    @media (min-width: 1024px) {
-      #canvas-container { height: 470px; }
+    @media (min-width: 1024px) { #canvas-container { height: 460px; } }
+
+    .hud-top {
+      position: absolute; top: 8px; left: 8px; right: 8px;
+      display: flex; justify-content: space-between; pointer-events: none; z-index: 5;
+    }
+    .badge {
+      background: rgba(11, 17, 32, 0.82); border: 1px solid rgba(255,255,255,0.14);
+      padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;
+      color: var(--accent); pointer-events: auto;
     }
 
-    .canvas-overlay-top {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      left: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      pointer-events: none;
-      z-index: 5;
+    /* Quick Move & Scene Controls Bar */
+    .quick-bar {
+      display: flex; align-items: center; justify-content: space-between; gap: 6px;
+      padding: 8px; background: var(--panel); border-top: 1px solid var(--border);
+      overflow-x: auto; white-space: nowrap;
     }
-    .canvas-badge {
-      background: rgba(15, 23, 42, 0.78);
-      border: 1px solid rgba(255,255,255,0.12);
-      padding: 5px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--accent);
-      pointer-events: auto;
-    }
+    .dpad { display: flex; gap: 4px; align-items: center; }
 
-    .canvas-toolbar {
-      display: flex;
-      gap: 6px;
-      padding: 10px;
-      background: rgba(15, 23, 42, 0.75);
-      border-top: 1px solid var(--border);
-      flex-wrap: wrap;
-      justify-content: space-between;
+    .btn {
+      border: none; border-radius: 9px; padding: 7px 11px;
+      font-family: inherit; font-weight: 700; font-size: 12px;
+      cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+      transition: 0.15s; flex-shrink: 0;
     }
+    .btn:active { transform: scale(0.96); }
+    .btn-primary { background: var(--accent); color: #0b1120; }
+    .btn-sec { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+    .btn-ok { background: var(--success); color: #052e16; }
+    .btn-del { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.35); }
+    .btn-icon { padding: 7px 9px; font-size: 13px; }
 
-    /* Panels & Tabs */
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px;
+    /* Horizontal Swipeable Tabs */
+    .workspace {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden;
     }
-
-    .tabs {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      background: var(--bg);
-      padding: 5px;
-      border-radius: 12px;
-      margin-bottom: 14px;
-      border: 1px solid var(--border);
-    }
-    .tab-btn {
-      background: transparent;
-      color: var(--muted);
-      border: none;
-      border-radius: 9px;
-      padding: 9px 4px;
-      font-family: inherit;
-      font-weight: 700;
-      font-size: 12px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .tab-btn.active {
-      background: var(--accent);
-      color: #0f172a;
-    }
-
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-
-    /* Form Controls - 16px font prevents iOS Safari auto-zoom */
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-    .form-grid-3 {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-    .field { display: flex; flex-direction: column; gap: 4px; }
-    .field label { font-size: 12px; color: var(--muted); font-weight: 600; }
-    .field input, .field select {
-      width: 100%;
-      background: var(--bg);
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 9px 10px;
-      font-family: inherit;
-      font-size: 16px; /* Prevents iOS zoom */
-      font-weight: 700;
-      outline: none;
-    }
-    .field input:focus, .field select:focus {
-      border-color: var(--accent);
-    }
-
-    .color-swatches {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 4px;
-    }
-    .swatch {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: 2px solid transparent;
-      cursor: pointer;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
-    }
-    .swatch.active {
-      border-color: var(--accent);
-      transform: scale(1.1);
-    }
-
-    /* Unit List */
-    .unit-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 12px;
-    }
-    .unit-item {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 11px;
-      padding: 10px 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-    }
-    .unit-item.active-unit {
-      border-color: var(--accent);
-      background: rgba(245, 158, 11, 0.08);
-    }
-    .unit-meta { font-size: 12px; color: var(--muted); }
-    .unit-title { font-weight: 800; font-size: 14px; }
-
-    /* KPI Stats */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-      margin-bottom: 14px;
-    }
-    @media (min-width: 640px) {
-      .kpi-grid { grid-template-columns: repeat(4, 1fr); }
-    }
-    .kpi {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 11px;
-      padding: 10px;
-      text-align: center;
-    }
-    .kpi-val { font-size: 18px; font-weight: 800; color: var(--accent); }
-    .kpi-lbl { font-size: 11px; color: var(--muted); }
-
-    /* Tables */
-    .table-wrap {
-      overflow-x: auto;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      margin-bottom: 14px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-      background: var(--bg);
-    }
-    th, td {
-      padding: 9px 10px;
-      text-align: right;
+    .tabs-scroll {
+      display: flex; gap: 6px; padding: 8px; background: #0d1526;
       border-bottom: 1px solid var(--border);
-      white-space: nowrap;
+      overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
     }
-    th {
-      background: var(--panel-light);
-      color: var(--accent);
-      font-weight: 700;
+    .tabs-scroll::-webkit-scrollbar { display: none; }
+    .tab-pill {
+      background: var(--panel-2); color: var(--muted);
+      border: 1px solid var(--border); border-radius: 999px;
+      padding: 7px 14px; font-family: inherit; font-weight: 700; font-size: 12px;
+      white-space: nowrap; cursor: pointer; flex-shrink: 0; transition: 0.2s;
+    }
+    .tab-pill.active {
+      background: var(--accent); color: #0b1120; border-color: var(--accent);
     }
 
-    /* Nesting SVG Sheets */
-    .sheet-card {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 14px;
+    .tab-pane { display: none; padding: 14px; }
+    .tab-pane.active { display: block; }
+
+    /* Forms & Catalog Cards */
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; margin-bottom: 10px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+    .field { display: flex; flex-direction: column; gap: 3px; }
+    .field label { font-size: 11px; color: var(--muted); font-weight: 700; }
+    .field input, .field select {
+      width: 100%; background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 9px;
+      padding: 8px 9px; font-family: inherit; font-size: 16px; font-weight: 700; outline: none;
     }
-    .sheet-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-      font-size: 13px;
-      font-weight: 700;
+    .field input:focus, .field select:focus { border-color: var(--accent); }
+
+    .catalog-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px;
     }
-    .sheet-svg {
-      width: 100%;
-      height: auto;
-      background: #172033;
-      border-radius: 8px;
-      display: block;
+    .cat-card {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 11px;
+      padding: 10px 6px; text-align: center; cursor: pointer; transition: 0.15s;
+    }
+    .cat-card:active { border-color: var(--accent); background: rgba(245,158,11,0.1); }
+    .cat-icon { font-size: 22px; display: block; margin-bottom: 3px; }
+    .cat-name { font-size: 11px; font-weight: 700; display: block; }
+
+    .swatches { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 4px; }
+    .swatch {
+      width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+      border: 2px solid transparent; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25);
+    }
+    .swatch.active { border-color: var(--accent); transform: scale(1.12); }
+
+    /* Unit Chips Strip */
+    .units-strip {
+      display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 10px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .unit-chip {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+      padding: 6px 10px; white-space: nowrap; font-size: 12px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+    }
+    .unit-chip.selected { border-color: var(--accent); background: rgba(245,158,11,0.14); color: var(--accent); }
+
+    /* Tables & KPIs */
+    .kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+    @media (min-width: 640px) { .kpis { grid-template-columns: repeat(4, 1fr); } }
+    .kpi { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 8px; text-align: center; }
+    .kpi b { font-size: 16px; color: var(--accent); display: block; }
+    .kpi span { font-size: 11px; color: var(--muted); }
+
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; background: var(--bg); }
+    th, td { padding: 8px 9px; text-align: right; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    th { background: var(--panel-2); color: var(--accent); }
+
+    .sheet-box { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 10px; }
+    .sheet-svg { width: 100%; height: auto; border-radius: 6px; display: block; margin-top: 6px; }
+
+    .total-card {
+      background: linear-gradient(135deg, rgba(245,158,11,0.16), rgba(16,185,129,0.12));
+      border: 1px solid var(--accent); border-radius: 12px; padding: 12px;
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
     }
 
     /* Modal */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.72);
-      z-index: 100;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 14px;
+    .modal-bg {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 100;
+      display: none; align-items: center; justify-content: center; padding: 12px;
     }
-    .modal-backdrop.open { display: flex; }
+    .modal-bg.open { display: flex; }
     .modal {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      max-width: 520px;
-      width: 100%;
-      max-height: 88dvh;
-      overflow-y: auto;
-      padding: 16px;
+      background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+      max-width: 500px; width: 100%; max-height: 86dvh; overflow-y: auto; padding: 14px;
     }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 8px;
-    }
+    .sec-lbl { font-size: 13px; font-weight: 800; color: var(--accent); margin: 10px 0 6px; }
 
-    .section-title {
-      font-size: 14px;
-      font-weight: 800;
-      color: var(--accent);
-      margin: 12px 0 8px;
-    }
-
-    .quote-total-box {
-      background: linear-gradient(135deg, rgba(245,158,11,0.16), rgba(16,185,129,0.12));
-      border: 1px solid var(--accent);
-      border-radius: 12px;
-      padding: 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin: 12px 0;
-    }
-
-    /* Print / PDF Styles (Works natively on iOS Safari!) */
     #print-area { display: none; }
-
     @media print {
       body { background: #fff !important; color: #111 !important; }
-      .topbar, .app-grid, .modal-backdrop { display: none !important; }
-      #print-area {
-        display: block !important;
-        padding: 16px;
-        font-family: 'Cairo', sans-serif;
-        color: #111;
-      }
-      #print-area table { background: #fff; color: #111; border: 1px solid #cbd5e1; }
+      .topbar, .layout, .modal-bg { display: none !important; }
+      #print-area { display: block !important; padding: 14px; font-family: 'Cairo', sans-serif; }
+      #print-area table { background: #fff; color: #111; }
       #print-area th { background: #f1f5f9 !important; color: #0f172a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      #print-area td, #print-area th { border: 1px solid #cbd5e1; padding: 6px 8px; }
-      .print-sheet { page-break-inside: avoid; margin-bottom: 18px; }
+      #print-area td, #print-area th { border: 1px solid #cbd5e1; padding: 6px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Topbar -->
   <header class="topbar">
     <div class="brand">
-      <div class="brand-logo" id="brand-logo-letter">K</div>
+      <div class="brand-logo" id="logo-char">K</div>
       <div>
-        <h1 id="brand-name-display">KitchenPro 3D</h1>
-        <span id="brand-sub-display">محرك تصميم المطابخ وقص الألواح</span>
+        <h1 id="brand-title">KitchenPro 3D Studio</h1>
+        <span id="brand-sub">استوديو التصميم المعماري وقص الألواح</span>
       </div>
     </div>
-    <div class="top-actions">
-      <button class="btn btn-secondary btn-sm" onclick="openSettings()">⚙️ الأسعار والهوية</button>
-    </div>
+    <button class="btn btn-sec" onclick="openSettings()">⚙️ الأسعار والهوية</button>
   </header>
 
-  <!-- Main Workspace -->
-  <main class="app-grid">
-    <!-- Left/Top: 3D Live Viewport -->
-    <section class="viewport-sticky">
-      <div class="canvas-card">
-        <div class="canvas-overlay-top">
-          <div class="canvas-badge" id="dim-badge">80 × 72 × 56 سم</div>
-          <div class="canvas-badge" id="price-badge">0 $</div>
+  <main class="layout">
+    <!-- 3D Viewport + Direct Touch Move Controls -->
+    <section class="sticky-3d">
+      <div class="viewport-card">
+        <div class="hud-top">
+          <div class="badge" id="hud-selected">المحدد: خزانة سفلية</div>
+          <div class="badge" id="hud-price">0 $</div>
         </div>
         <div id="canvas-container"></div>
-        <div class="canvas-toolbar">
-          <div style="display:flex; gap:6px;">
-            <button class="btn btn-secondary btn-sm" id="btn-doors" onclick="toggleDoors()">🚪 فتح الأبواب</button>
-            <button class="btn btn-secondary btn-sm" id="btn-xray" onclick="toggleXray()">👁️ شفافية</button>
-            <button class="btn btn-secondary btn-sm" onclick="resetCamera()">🔄 ضبط</button>
+        <div class="quick-bar">
+          <div class="dpad">
+            <button class="btn btn-sec btn-icon" title="يمين" onclick="nudgeUnit(10, 0)">➡️</button>
+            <button class="btn btn-sec btn-icon" title="يسار" onclick="nudgeUnit(-10, 0)">⬅️</button>
+            <button class="btn btn-sec btn-icon" title="للأمام" onclick="nudgeUnit(0, 10)">⬇️</button>
+            <button class="btn btn-sec btn-icon" title="للخلف" onclick="nudgeUnit(0, -10)">⬆️</button>
+            <button class="btn btn-primary btn-icon" onclick="rotateUnit()">🔄 90°</button>
           </div>
-          <button class="btn btn-primary btn-sm" onclick="addUnitToProject()">➕ إضافة للمشروع</button>
+          <div style="display:flex; gap:5px;">
+            <button class="btn btn-sec" id="btn-doors" onclick="toggleDoors()">🚪 فتح</button>
+            <button class="btn btn-sec" id="btn-light" onclick="toggleStudioLight()">💡 إضاءة</button>
+            <button class="btn btn-sec" onclick="resetCamera()">🎥</button>
+          </div>
         </div>
-      </div>
-
-      <!-- Quick Project Units Bar -->
-      <div class="panel" style="margin-top:12px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <strong style="font-size:14px;">📦 وحدات المطبخ الحالية (<span id="units-count">1</span>)</strong>
-          <button class="btn btn-danger btn-sm" onclick="clearProject()">مسح الكل</button>
-        </div>
-        <div class="unit-list" id="unit-list"></div>
       </div>
     </section>
 
-    <!-- Right/Bottom: Control & Engineering Tabs -->
-    <section class="panel">
-      <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('design', this)">🛠️ التصميم</button>
-        <button class="tab-btn" onclick="switchTab('cutlist', this)">📐 قائمة القص</button>
-        <button class="tab-btn" onclick="switchTab('nesting', this)">🪵 خريطة الألواح</button>
-        <button class="tab-btn" onclick="switchTab('quote', this)">💰 عرض السعر</button>
+    <!-- Horizontal Swipeable Tabs Panel -->
+    <section class="workspace">
+      <div class="tabs-scroll" id="tabs-bar">
+        <button class="tab-pill active" onclick="openTab('room', this)">🏠 أبعاد الغرفة والقوالب</button>
+        <button class="tab-pill" onclick="openTab('units', this)">🧱 إضافة وحدات وأجهزة</button>
+        <button class="tab-pill" onclick="openTab('edit', this)">🎛️ تعديل وتحريك القطعة</button>
+        <button class="tab-pill" onclick="openTab('cut', this)">📐 القص والألواح</button>
+        <button class="tab-pill" onclick="openTab('quote', this)">💰 السعر و PDF</button>
       </div>
 
-      <!-- TAB 1: DESIGN -->
-      <div id="tab-design" class="tab-content active">
-        <div class="form-grid">
+      <!-- TAB 1: ROOM DIMENSIONS & PRESETS -->
+      <div id="pane-room" class="tab-pane active">
+        <div class="sec-lbl">📐 قياسات غرفة المطبخ (سم)</div>
+        <div class="grid-3">
+          <div class="field"><label>عرض الغرفة (X)</label><input type="number" id="r-w" value="380" min="180" max="900" oninput="updateRoom()" /></div>
+          <div class="field"><label>عمق الغرفة (Z)</label><input type="number" id="r-d" value="320" min="180" max="900" oninput="updateRoom()" /></div>
+          <div class="field"><label>ارتفاع السقف</label><input type="number" id="r-h" value="280" min="220" max="420" oninput="updateRoom()" /></div>
+        </div>
+        <div class="grid-2">
           <div class="field">
-            <label>نوع الوحدة</label>
-            <select id="u-type" onchange="onTypeChange()">
-              <option value="base">خزانة سفلية (أرضية)</option>
-              <option value="wall">خزانة علوية (معلقة)</option>
-              <option value="tall">خزانة عمودية (طويلة)</option>
-              <option value="drawers">وحدة أدراج (جوارير)</option>
+            <label>نافذة إضاءة طبيعية</label>
+            <select id="r-win" onchange="updateRoom()">
+              <option value="1" selected>مع نافذة مضيئة بالمنتصف</option>
+              <option value="0">بدون نافذة (جدار كامل)</option>
             </select>
           </div>
           <div class="field">
-            <label>العدد (تكرار الوحدة)</label>
-            <input type="number" id="u-qty" value="1" min="1" max="20" oninput="updateCurrentUnit()" />
-          </div>
-        </div>
-
-        <div class="form-grid-3">
-          <div class="field">
-            <label>العرض (سم)</label>
-            <input type="number" id="u-w" value="80" min="25" max="200" oninput="updateCurrentUnit()" />
-          </div>
-          <div class="field">
-            <label>ارتفاع الصندوق (سم)</label>
-            <input type="number" id="u-h" value="72" min="30" max="240" oninput="updateCurrentUnit()" />
-          </div>
-          <div class="field">
-            <label>العمق (سم)</label>
-            <input type="number" id="u-d" value="56" min="25" max="80" oninput="updateCurrentUnit()" />
-          </div>
-        </div>
-
-        <div class="form-grid-3">
-          <div class="field">
-            <label>عدد الأبواب</label>
-            <select id="u-doors" onchange="updateCurrentUnit()">
-              <option value="0">بدون أبواب</option>
-              <option value="1">باب واحد</option>
-              <option value="2" selected>بابين</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>عدد الرفوف</label>
-            <input type="number" id="u-shelves" value="1" min="0" max="8" oninput="updateCurrentUnit()" />
-          </div>
-          <div class="field">
-            <label>عدد الأدراج</label>
-            <input type="number" id="u-drawers" value="0" min="0" max="5" oninput="updateCurrentUnit()" />
-          </div>
-        </div>
-
-        <div class="form-grid">
-          <div class="field">
-            <label>ارتفاع الأرجل/الوزرة (سم)</label>
-            <input type="number" id="u-plinth" value="10" min="0" max="20" oninput="updateCurrentUnit()" />
-          </div>
-          <div class="field">
-            <label>الرخامة العلوية (للسفلي)</label>
-            <select id="u-counter" onchange="updateCurrentUnit()">
-              <option value="1" selected>مع رخامة (بروز 4 سم)</option>
-              <option value="0">بدون رخامة</option>
+            <label>لون جدران المطبخ</label>
+            <select id="r-wallcol" onchange="updateRoom()">
+              <option value="#e2e8f0" selected>أبيض معماري ناصع</option>
+              <option value="#d6cfc7">بيج دافئ (Greige)</option>
+              <option value="#94a3b8">رمادي مودرن</option>
             </select>
           </div>
         </div>
 
-        <div class="field" style="margin-bottom:12px;">
-          <label>لون وخامة الأبواب (معاينة فورية)</label>
-          <div class="color-swatches" id="color-swatches"></div>
-        </div>
-
-        <div style="display:flex; gap:8px; margin-top:14px;">
-          <button class="btn btn-primary" style="flex:1;" onclick="addUnitToProject()">➕ حفظ كوحدة جديدة بالمطبخ</button>
+        <div class="sec-lbl">✨ قوالب مطابخ جاهزة بضغطة زر</div>
+        <div class="grid-3">
+          <button class="btn btn-sec" onclick="applyPreset('straight')">📏 مطبخ مستقيم</button>
+          <button class="btn btn-primary" onclick="applyPreset('lshape')">📐 مطبخ حرف L</button>
+          <button class="btn btn-sec" onclick="applyPreset('island')">🏝️ مطبخ + جزيرة</button>
         </div>
       </div>
 
-      <!-- TAB 2: CUT LIST -->
-      <div id="tab-cutlist" class="tab-content">
-        <div class="kpi-grid">
-          <div class="kpi"><div class="kpi-val" id="kpi-pieces">0</div><div class="kpi-lbl">إجمالي القطع</div></div>
-          <div class="kpi"><div class="kpi-val" id="kpi-area">0 م²</div><div class="kpi-lbl">مساحة الخشب الصافية</div></div>
-          <div class="kpi"><div class="kpi-val" id="kpi-edge">0 م</div><div class="kpi-lbl">شريط PVC المطلوب</div></div>
-          <div class="kpi"><div class="kpi-val" id="kpi-hdf">0 م²</div><div class="kpi-lbl">مساحة الظهر HDF</div></div>
+      <!-- TAB 2: ADD UNITS & APPLIANCES CATALOG -->
+      <div id="pane-units" class="tab-pane">
+        <div class="sec-lbl">➕ اضغط لإضافة وحدة أو جهاز للمطبخ</div>
+        <div class="catalog-grid">
+          <div class="cat-card" onclick="addCatalogItem('base')"><span class="cat-icon">🗄️</span><span class="cat-name">خزانة سفلية</span></div>
+          <div class="cat-card" onclick="addCatalogItem('drawers')"><span class="cat-icon">🗂️</span><span class="cat-name">وحدة أدراج</span></div>
+          <div class="cat-card" onclick="addCatalogItem('wall')"><span class="cat-icon">🪟</span><span class="cat-name">خزانة علوية</span></div>
+          <div class="cat-card" onclick="addCatalogItem('corner')"><span class="cat-icon">📐</span><span class="cat-name">وحدة زاوية L</span></div>
+          <div class="cat-card" onclick="addCatalogItem('sink')"><span class="cat-icon">🚰</span><span class="cat-name">مجلى وحوض</span></div>
+          <div class="cat-card" onclick="addCatalogItem('oven')"><span class="cat-icon">🔥</span><span class="cat-name">فرن وشفاط</span></div>
+          <div class="cat-card" onclick="addCatalogItem('tall')"><span class="cat-icon">🚪</span><span class="cat-name">خزانة عمودية</span></div>
+          <div class="cat-card" onclick="addCatalogItem('fridge')"><span class="cat-icon">🧊</span><span class="cat-name">ثلاجة مودرن</span></div>
+          <div class="cat-card" onclick="addCatalogItem('island')"><span class="cat-icon">🏝️</span><span class="cat-name">جزيرة وسطية</span></div>
+        </div>
+      </div>
+
+      <!-- TAB 3: EDIT & POSITION SELECTED UNIT -->
+      <div id="pane-edit" class="tab-pane">
+        <div class="sec-lbl">اختر القطعة لتعديلها أو تحريكها:</div>
+        <div class="units-strip" id="units-strip"></div>
+
+        <div class="grid-3">
+          <div class="field"><label>الموقع يمين/يسار X</label><input type="number" id="e-x" step="5" oninput="updateSelectedUnit()" /></div>
+          <div class="field"><label>الموقع أمام/خلف Z</label><input type="number" id="e-z" step="5" oninput="updateSelectedUnit()" /></div>
+          <div class="field">
+            <label>الاتجاه (الزاوية)</label>
+            <select id="e-rot" onchange="updateSelectedUnit()">
+              <option value="0">0° (جدار خلفي)</option>
+              <option value="90">90° (جدار أيسر)</option>
+              <option value="270">270° (جدار أيمن)</option>
+              <option value="180">180° (مقابل)</option>
+            </select>
+          </div>
         </div>
 
-        <div class="section-title">📐 جدول قياسات القص الدقيق (بعد خصم السماكة والخلوص)</div>
+        <div class="grid-3">
+          <div class="field"><label>العرض (سم)</label><input type="number" id="e-w" min="30" max="240" oninput="updateSelectedUnit()" /></div>
+          <div class="field"><label>الارتفاع (سم)</label><input type="number" id="e-h" min="30" max="250" oninput="updateSelectedUnit()" /></div>
+          <div class="field"><label>العمق (سم)</label><input type="number" id="e-d" min="25" max="120" oninput="updateSelectedUnit()" /></div>
+        </div>
+
+        <div class="grid-3">
+          <div class="field">
+            <label>التشطيب الديكوري</label>
+            <select id="e-finish" onchange="updateSelectedUnit()">
+              <option value="matte">مات سوفت تاتش</option>
+              <option value="gloss">أكريليك لامع</option>
+              <option value="fluted">خشب مضلّع مودرن</option>
+              <option value="glass">زجاج فيميه + ألمنيوم</option>
+              <option value="stone">حجري / رخامي</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>الأبواب</label>
+            <select id="e-doors" onchange="updateSelectedUnit()">
+              <option value="0">بدون</option>
+              <option value="1">باب 1</option>
+              <option value="2">بابين</option>
+            </select>
+          </div>
+          <div class="field"><label>الرفوف</label><input type="number" id="e-shelves" min="0" max="8" oninput="updateSelectedUnit()" /></div>
+        </div>
+
+        <div class="field" style="margin-bottom:10px;">
+          <label>لون القطعة (<span id="col-lbl">كشمير</span>)</label>
+          <div class="swatches" id="swatches"></div>
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-sec" style="flex:1;" onclick="duplicateSelected()">📑 تكرار القطعة</button>
+          <button class="btn btn-del" onclick="deleteSelected()">🗑️ حذف</button>
+        </div>
+      </div>
+
+      <!-- TAB 4: CUT LIST & NESTING -->
+      <div id="pane-cut" class="tab-pane">
+        <div class="kpis">
+          <div class="kpi"><b id="k-sheets">0</b><span>ألواح الخشب</span></div>
+          <div class="kpi"><b id="k-eff">0%</b><span>كفاءة القص</span></div>
+          <div class="kpi"><b id="k-edge">0 م</b><span>شريط PVC</span></div>
+          <div class="kpi"><b id="k-hdf">0 م²</b><span>الظهر HDF</span></div>
+        </div>
+
+        <div class="sec-lbl">📐 جدول القص الدقيق (سم)</div>
         <div class="table-wrap">
           <table>
-            <thead>
-              <tr>
-                <th>القطعة</th>
-                <th>الطول (سم)</th>
-                <th>العرض (سم)</th>
-                <th>العدد</th>
-                <th>الشريط (م)</th>
-              </tr>
-            </thead>
-            <tbody id="cutlist-tbody"></tbody>
+            <thead><tr><th>القطعة</th><th>الطول</th><th>العرض</th><th>العدد</th><th>الشريط</th></tr></thead>
+            <tbody id="cut-tbody"></tbody>
           </table>
         </div>
 
-        <div class="section-title">🔩 قائمة الإكسسوارات والملحقات</div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>الصنف</th>
-                <th>الكمية</th>
-                <th>ملاحظة هندسية</th>
-              </tr>
-            </thead>
-            <tbody id="hardware-tbody"></tbody>
-          </table>
-        </div>
+        <div class="sec-lbl">🪵 مخطط توزيع القطع على الألواح</div>
+        <div id="nesting-list"></div>
       </div>
 
-      <!-- TAB 3: 2D SHEET NESTING -->
-      <div id="tab-nesting" class="tab-content">
-        <div class="kpi-grid">
-          <div class="kpi"><div class="kpi-val" id="nest-sheets">0</div><div class="kpi-lbl">عدد الألواح المطلوبة</div></div>
-          <div class="kpi"><div class="kpi-val" id="nest-eff">0%</div><div class="kpi-lbl">كفاءة استغلال اللوح</div></div>
-          <div class="kpi"><div class="kpi-val" id="nest-waste">0%</div><div class="kpi-lbl">نسبة الهدر</div></div>
-          <div class="kpi"><div class="kpi-val" id="nest-size">244×122</div><div class="kpi-lbl">مقاس اللوح (سم)</div></div>
-        </div>
-        <div id="nesting-warning" style="display:none; background:rgba(239,68,68,0.15); border:1px solid #ef4444; padding:10px; border-radius:10px; margin-bottom:12px; font-size:13px;"></div>
-        <div id="nesting-container"></div>
-      </div>
-
-      <!-- TAB 4: QUOTE & EXPORT -->
-      <div id="tab-quote" class="tab-content">
-        <div class="form-grid">
-          <div class="field">
-            <label>اسم الزبون (اختياري لعرض السعر)</label>
-            <input type="text" id="client-name" placeholder="مثلاً: أ. أحمد المحمد" />
-          </div>
-          <div class="field">
-            <label>نوع الخشب المعروض للزبون</label>
-            <input type="text" id="material-label" value="MDF إسباني / ميلامين 18مم" />
-          </div>
+      <!-- TAB 5: QUOTE & EXPORT -->
+      <div id="pane-quote" class="tab-pane">
+        <div class="grid-2">
+          <div class="field"><label>اسم العميل</label><input type="text" id="q-client" placeholder="أ. سامر العلي" /></div>
+          <div class="field"><label>مواصفات الخشب</label><input type="text" id="q-mat" value="MDF إسباني + أكريليك 18مم" /></div>
         </div>
 
-        <div class="quote-total-box">
+        <div class="total-card">
           <div>
-            <div style="font-size:12px; color:var(--muted);">السعر النهائي المقترح للزبون</div>
-                        <div style="font-size:26px; font-weight:800; color:var(--accent);" id="final-price-display">0 $</div>
+            <div style="font-size:11px; color:var(--muted);">السعر الإجمالي للعميل</div>
+            <div style="font-size:24px; font-weight:800; color:var(--accent);" id="q-final">0 $</div>
           </div>
-          <div style="text-align:left;">
-            <div style="font-size:12px; color:var(--muted);">التكلفة المباشرة: <strong id="direct-cost-display" style="color:#fff;">0</strong></div>
-            <div style="font-size:12px; color:var(--success);">صافي الربح: <strong id="profit-display">0</strong></div>
+          <div style="text-align:left; font-size:12px;">
+            <div>التكلفة: <strong id="q-cost">0</strong></div>
+                        <div style="color:var(--success);">الربح: <strong id="q-profit">0</strong></div>
           </div>
         </div>
 
         <div class="table-wrap">
           <table>
-            <thead>
-              <tr>
-                <th>بند التكلفة</th>
-                <th>الكمية</th>
-                <th>الإجمالي</th>
-              </tr>
-            </thead>
+            <thead><tr><th>البند</th><th>الكمية</th><th>التكلفة</th></tr></thead>
             <tbody id="cost-tbody"></tbody>
           </table>
         </div>
 
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:12px;">
-          <button class="btn btn-primary" onclick="printDocument('client')">📄 عرض سعر PDF للزبون</button>
-          <button class="btn btn-secondary" onclick="printDocument('workshop')">🏭 أمر قص PDF للورشة</button>
+        <div class="grid-2">
+          <button class="btn btn-primary" onclick="printPDF('client')">📄 عرض سعر PDF</button>
+          <button class="btn btn-sec" onclick="printPDF('workshop')">🏭 أمر قص الورشة</button>
         </div>
-        <button class="btn btn-success" style="width:100%; margin-top:8px;" onclick="shareWhatsApp()">💬 إرسال ملخص عرض السعر عبر واتساب</button>
+        <button class="btn btn-ok" style="width:100%;" onclick="sendWhatsApp()">💬 إرسال العرض عبر واتساب</button>
       </div>
     </section>
   </main>
 
   <!-- Settings Modal -->
-  <div class="modal-backdrop" id="settings-modal">
+  <div class="modal-bg" id="settings-modal">
     <div class="modal">
-      <div class="modal-header">
-        <strong>⚙️ إعدادات الورشة والأسعار والمقاسات</strong>
-        <button class="btn btn-danger btn-sm" onclick="closeSettings()">إغلاق</button>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <strong>⚙️ إعدادات الورشة والأسعار</strong>
+        <button class="btn btn-del" onclick="closeSettings()">إغلاق</button>
       </div>
-
-      <div class="section-title">هوية المعمل (تظهر في عرض السعر)</div>
-      <div class="form-grid">
-        <div class="field"><label>اسم المعمل / الورشة</label><input type="text" id="set-brand" /></div>
-        <div class="field"><label>رقم الهاتف / واتساب</label><input type="text" id="set-phone" /></div>
+      <div class="grid-2">
+        <div class="field"><label>اسم المعمل</label><input type="text" id="s-brand" /></div>
+        <div class="field"><label>رقم الهاتف</label><input type="text" id="s-phone" /></div>
       </div>
-
-      <div class="section-title">مواصفات اللوح والقص</div>
-      <div class="form-grid-3">
-        <div class="field"><label>طول اللوح (سم)</label><input type="number" id="set-sw" /></div>
-        <div class="field"><label>عرض اللوح (سم)</label><input type="number" id="set-sh" /></div>
-        <div class="field"><label>سماكة الخشب (سم)</label><input type="number" step="0.1" id="set-thick" /></div>
+      <div class="grid-3">
+        <div class="field"><label>طول اللوح</label><input type="number" id="s-sw" /></div>
+        <div class="field"><label>عرض اللوح</label><input type="number" id="s-sh" /></div>
+        <div class="field"><label>العملة</label><input type="text" id="s-curr" /></div>
       </div>
-      <div class="form-grid">
-        <div class="field"><label>سماكة المنشار Kerf (سم)</label><input type="number" step="0.1" id="set-kerf" /></div>
-        <div class="field"><label>العملة</label><input type="text" id="set-curr" /></div>
+      <div class="grid-3">
+        <div class="field"><label>سعر اللوح</label><input type="number" id="s-psheet" /></div>
+        <div class="field"><label>متر الرخام</label><input type="number" id="s-pcounter" /></div>
+        <div class="field"><label>نسبة الربح %</label><input type="number" id="s-margin" /></div>
       </div>
-
-      <div class="section-title">الأسعار والتسعير</div>
-      <div class="form-grid-3">
-        <div class="field"><label>سعر لوح الخشب</label><input type="number" id="set-p-sheet" /></div>
-        <div class="field"><label>سعر متر الظهر HDF</label><input type="number" id="set-p-hdf" /></div>
-        <div class="field"><label>سعر متر الشريط</label><input type="number" step="0.1" id="set-p-edge" /></div>
-      </div>
-      <div class="form-grid-3">
-        <div class="field"><label>سعر المفصلة</label><input type="number" step="0.5" id="set-p-hinge" /></div>
-        <div class="field"><label>سعر طقم السكك</label><input type="number" step="0.5" id="set-p-slide" /></div>
-        <div class="field"><label>سعر المقبض/الأرجل</label><input type="number" step="0.5" id="set-p-misc" /></div>
-      </div>
-      <div class="form-grid">
-        <div class="field"><label>سعر متر الرخامة الطولي</label><input type="number" id="set-p-counter" /></div>
-        <div class="field"><label>هامش المصنعية والربح (%)</label><input type="number" id="set-margin" /></div>
-      </div>
-
-      <button class="btn btn-primary" style="width:100%; margin-top:10px;" onclick="saveSettings()">💾 حفظ وتحديث الحسابات</button>
+      <button class="btn btn-primary" style="width:100%;" onclick="saveSettings()">💾 حفظ الإعدادات</button>
     </div>
   </div>
 
-  <!-- Dedicated Native Print Area for iPhone/Desktop PDF -->
   <div id="print-area"></div>
 
 <script>
-  // ================== 1. CONFIG & STATE ==================
-  const DEFAULT_CONFIG = {
-    brand: 'KitchenPro 3D',
-    phone: '',
-    currency: '$',
-    sheetW: 244,
-    sheetH: 122,
-    thickness: 1.8,
-    kerf: 0.4,
-    priceSheet: 45,
-    priceHdfM2: 6,
-    priceEdgeM: 0.5,
-    priceHinge: 2.5,
-    priceSlide: 12,
-    priceMisc: 2,
-    priceCounterM: 85,
-    marginPct: 40
+  // ================== 1. STATE & CONFIG ==================
+  const DEF_CFG = {
+    brand: 'KitchenPro 3D Studio', phone: '', currency: '$',
+    sheetW: 244, sheetH: 122, thickness: 1.8, kerf: 0.4,
+    priceSheet: 48, priceHdfM2: 6, priceEdgeM: 0.5, priceHinge: 2.5,
+    priceSlide: 12, priceMisc: 2, priceCounterM: 90, marginPct: 40
   };
 
   const COLORS = [
-    { name: 'أبيض مطفي', hex: '#f1f5f9', body: '#e2e8f0' },
-    { name: 'رمادي فحمي', hex: '#334155', body: '#cbd5e1' },
-    { name: 'خشبي جوزي', hex: '#6b4423', body: '#d6c7b2' },
-    { name: 'كشمير دافئ', hex: '#c8b6a6', body: '#f1f5f9' },
-    { name: 'بلوط طبيعي', hex: '#c19a6b', body: '#f8fafc' },
-    { name: 'أزرق ملكي', hex: '#1e3a5f', body: '#e2e8f0' },
-    { name: 'أخضر زيتوني', hex: '#4a5d4e', body: '#e2e8f0' }
+    { name: 'أبيض ثلجي', hex: '#f8fafc', body: '#f1f5f9', wood: false },
+    { name: 'كشمير دافئ', hex: '#cbbba8', body: '#f1f5f9', wood: false },
+    { name: 'رمادي غرافيت', hex: '#2d3748', body: '#cbd5e1', wood: false },
+    { name: 'أسود ملكي', hex: '#171c26', body: '#334155', wood: false },
+    { name: 'أخضر مريمي', hex: '#637a68', body: '#f1f5f9', wood: false },
+    { name: 'أزرق بترولي', hex: '#1d4063', body: '#e2e8f0', wood: false },
+    { name: 'بلوط أوروبي', hex: '#c59b6d', body: '#f8fafc', wood: true },
+    { name: 'جوز أمريكي', hex: '#5c3a21', body: '#e2d6c5', wood: true },
+    { name: 'تيك ذهبي', hex: '#9c6635', body: '#f1f5f9', wood: true },
+    { name: 'بيج رملي', hex: '#e5dccb', body: '#f8fafc', wood: false }
   ];
 
+  const UNIT_META = {
+    base:    { name: 'خزانة سفلية', w: 80, h: 72, d: 56, doors: 2, shelves: 1, drawers: 0, plinth: 10, counter: 1, y: 0 },
+    drawers: { name: 'وحدة أدراج', w: 80, h: 72, d: 56, doors: 0, shelves: 0, drawers: 3, plinth: 10, counter: 1, y: 0 },
+    wall:    { name: 'خزانة علوية', w: 80, h: 70, d: 34, doors: 2, shelves: 2, drawers: 0, plinth: 0,  counter: 0, y: 144 },
+    corner:  { name: 'وحدة زاوية L', w: 90, h: 72, d: 90, doors: 1, shelves: 1, drawers: 0, plinth: 10, counter: 1, y: 0 },
+    sink:    { name: 'وحدة مجلى', w: 90, h: 72, d: 56, doors: 2, shelves: 0, drawers: 0, plinth: 10, counter: 1, y: 0 },
+    oven:    { name: 'وحدة فرن وشفاط', w: 80, h: 72, d: 56, doors: 0, shelves: 0, drawers: 0, plinth: 10, counter: 1, y: 0 },
+    tall:    { name: 'خزانة عمودية', w: 60, h: 215, d: 58, doors: 2, shelves: 5, drawers: 0, plinth: 10, counter: 0, y: 0 },
+    fridge:  { name: 'ثلاجة مودرن', w: 90, h: 185, d: 68, doors: 2, shelves: 0, drawers: 0, plinth: 0,  counter: 0, y: 0 },
+    island:  { name: 'جزيرة وسطية', w: 140, h: 76, d: 80, doors: 2, shelves: 1, drawers: 0, plinth: 10, counter: 1, y: 0 }
+  };
+
   let config = loadConfig();
-  let units = [
-    { id: Date.now(), type: 'base', name: 'خزانة سفلية', w: 80, h: 72, d: 56, doors: 2, shelves: 1, drawers: 0, plinth: 10, counter: 1, qty: 1, colorIdx: 2 }
-  ];
-  let activeUnitId = units[0].id;
+  let room = { w: 380, d: 320, h: 280, win: 1, wallCol: '#e2e8f0' };
+  let units = [];
+  let selectedId = null;
   let doorsOpen = false;
-  let xrayMode = false;
+  let brightBoost = true;
   let lastCalc = null;
 
   function loadConfig() {
-    let saved = {};
-    try { saved = JSON.parse(localStorage.getItem('kp3d_config') || '{}'); } catch(e) {}
-    const merged = { ...DEFAULT_CONFIG, ...saved };
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('brand')) merged.brand = params.get('brand').replace(/_/g, ' ');
-    if (params.get('phone')) merged.phone = params.get('phone');
-    if (params.get('currency')) merged.currency = params.get('currency');
-    return merged;
+    let s = {};
+    try { s = JSON.parse(localStorage.getItem('kp3d_v3') || '{}'); } catch(e) {}
+    const m = { ...DEF_CFG, ...s };
+    const p = new URLSearchParams(window.location.search);
+    if (p.get('brand')) m.brand = p.get('brand').replace(/_/g, ' ');
+    if (p.get('phone')) m.phone = p.get('phone');
+    if (p.get('currency')) m.currency = p.get('currency');
+    return m;
   }
 
-  function applyBrandUI() {
-    document.getElementById('brand-name-display').textContent = config.brand;
-    document.getElementById('brand-logo-letter').textContent = config.brand.trim().charAt(0).toUpperCase();
-    document.getElementById('brand-sub-display').textContent = config.phone ? `للتواصل: ${config.phone}` : 'محرك تصميم المطابخ وقص الألواح';
+  function applyBrand() {
+    document.getElementById('brand-title').textContent = config.brand;
+    document.getElementById('logo-char').textContent = config.brand.trim().charAt(0).toUpperCase();
+    document.getElementById('brand-sub').textContent = config.phone ? `للتواصل: ${config.phone}` : 'استوديو التصميم المعماري وقص الألواح';
   }
 
-    // ================== 2. THREE.JS 3D ENGINE (REALISTIC PBR STUDIO) ==================
-  let scene, camera, renderer, controls, cabinetGroup, roomGroup;
+  // ================== 2. THREE.JS BRIGHT ARCHITECTURAL STUDIO ==================
+  let scene, camera, renderer, controls, roomGroup, sceneGroup, hemiLight, sunLight;
   const texCache = {};
 
-  function getWoodTexture(hexColor, isWood) {
-    const key = hexColor + '_' + (isWood ? 'w' : 'm');
-    if (texCache[key]) return texCache[key];
+  function getTex(hex, mode) {
+    const k = `${hex}_${mode}`;
+    if (texCache[k]) return texCache[k];
+    const c = document.createElement('canvas'); c.width = 256; c.height = 256;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = hex; ctx.fillRect(0, 0, 256, 256);
 
-    const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 256;
-    const ctx = canvas.getContext('2d');
-
-    ctx.fillStyle = hexColor;
-    ctx.fillRect(0, 0, 256, 256);
-
-    if (isWood) {
-      // Procedural organic wood grain fibers
-      for (let i = 0; i < 180; i++) {
+    if (mode === 'wood') {
+      for (let i = 0; i < 200; i++) {
         const x = Math.random() * 256;
-        const alpha = 0.04 + Math.random() * 0.09;
-        ctx.strokeStyle = i % 2 === 0 ? `rgba(20, 10, 0, ${alpha})` : `rgba(255, 240, 220, ${alpha * 0.6})`;
-        ctx.lineWidth = 0.6 + Math.random() * 1.8;
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.bezierCurveTo(x + (Math.random() - 0.5) * 14, 85, x + (Math.random() - 0.5) * 14, 170, x + (Math.random() - 0.5) * 8, 256);
-        ctx.stroke();
+        ctx.strokeStyle = i % 2 === 0 ? 'rgba(20,10,0,0.08)' : 'rgba(255,245,230,0.06)';
+        ctx.lineWidth = 0.7 + Math.random() * 1.6;
+        ctx.beginPath(); ctx.moveTo(x, 0);
+        ctx.bezierCurveTo(x + 8, 85, x - 8, 170, x + 3, 256); ctx.stroke();
       }
-    } else {
-      // Subtle matte melamine micro-grain
-      for (let i = 0; i < 400; i++) {
-        ctx.fillStyle = `rgba(255,255,255,0.025)`;
-        ctx.fillRect(Math.random() * 256, Math.random() * 256, 2, 2);
+    } else if (mode === 'fluted') {
+      for (let x = 0; x < 256; x += 16) {
+        const g = ctx.createLinearGradient(x, 0, x + 16, 0);
+        g.addColorStop(0, 'rgba(0,0,0,0.34)'); g.addColorStop(0.3, 'rgba(255,255,255,0.16)');
+        g.addColorStop(1, 'rgba(0,0,0,0.38)');
+        ctx.fillStyle = g; ctx.fillRect(x, 0, 16, 256);
+      }
+    } else if (mode === 'stone') {
+      for (let i = 0; i < 700; i++) {
+        ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)';
+        ctx.fillRect(Math.random() * 256, Math.random() * 256, 3, 2);
       }
     }
-
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.wrapS = THREE.RepeatWrapping;
-    tex.wrapT = THREE.RepeatWrapping;
-    texCache[key] = tex;
-    return tex;
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = THREE.RepeatWrapping; t.wrapT = THREE.RepeatWrapping;
+    texCache[k] = t; return t;
   }
 
-  function getMarbleTexture() {
+  function getMarbleTex() {
     if (texCache.marble) return texCache.marble;
-    const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 256;
-    const ctx = canvas.getContext('2d');
-
-    ctx.fillStyle = '#18202c';
-    ctx.fillRect(0, 0, 256, 256);
-
-    // Realistic marble veins
+    const c = document.createElement('canvas'); c.width = 256; c.height = 256;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#18202e'; ctx.fillRect(0, 0, 256, 256);
     for (let v = 0; v < 9; v++) {
-      ctx.strokeStyle = v % 3 === 0 ? 'rgba(245, 190, 90, 0.22)' : 'rgba(226, 232, 240, 0.16)';
-      ctx.lineWidth = 0.8 + Math.random() * 1.4;
-      ctx.beginPath();
-      let x = Math.random() * 256, y = 0;
-      ctx.moveTo(x, y);
-      while (y < 256) {
-        y += 24;
-        x += (Math.random() - 0.45) * 28;
-        ctx.lineTo(x, y);
-      }
+      ctx.strokeStyle = v % 3 === 0 ? 'rgba(245,190,90,0.28)' : 'rgba(248,250,252,0.18)';
+      ctx.lineWidth = 1.1; ctx.beginPath();
+      let x = Math.random() * 256, y = 0; ctx.moveTo(x, y);
+      while (y < 256) { y += 22; x += (Math.random() - 0.45) * 26; ctx.lineTo(x, y); }
       ctx.stroke();
     }
-    const tex = new THREE.CanvasTexture(canvas);
-    texCache.marble = tex;
-    return tex;
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = THREE.RepeatWrapping; t.wrapT = THREE.RepeatWrapping;
+    texCache.marble = t; return t;
   }
 
-  function getTileTexture() {
-    if (texCache.tile) return texCache.tile;
-    const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 256;
-    const ctx = canvas.getContext('2d');
-
-    ctx.fillStyle = '#cbd5e1';
-    ctx.fillRect(0, 0, 256, 256);
-    ctx.strokeStyle = '#94a3b8';
-    ctx.lineWidth = 2;
-    for (let y = 0; y < 256; y += 32) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(256, y); ctx.stroke();
-      const offset = (y / 32) % 2 === 0 ? 0 : 32;
-      for (let x = offset; x < 256; x += 64) {
-        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 32); ctx.stroke();
-      }
-    }
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.wrapS = THREE.RepeatWrapping;
-    tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(4, 3);
-    texCache.tile = tex;
-    return tex;
+  function getFloorTileTex() {
+    if (texCache.ftile) return texCache.ftile;
+    const c = document.createElement('canvas'); c.width = 256; c.height = 256;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#cbd5e1'; ctx.fillRect(0, 0, 256, 256);
+    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2;
+    ctx.strokeRect(2, 2, 124, 124); ctx.strokeRect(130, 2, 124, 124);
+    ctx.strokeRect(2, 130, 124, 124); ctx.strokeRect(130, 130, 124, 124);
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = THREE.RepeatWrapping; t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(6, 5);
+    texCache.ftile = t; return t;
   }
 
   function init3D() {
-    const container = document.getElementById('canvas-container');
+    const el = document.getElementById('canvas-container');
     scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x0b1120, 0.0018);
+    scene.background = new THREE.Color(0x0f172a);
 
-    camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 1, 2000);
-    camera.position.set(130, 110, 175);
+    camera = new THREE.PerspectiveCamera(42, el.clientWidth / el.clientHeight, 1, 3000);
+    camera.position.set(220, 210, 340);
 
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setSize(el.clientWidth, el.clientHeight);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.08;
-    container.appendChild(renderer.domElement);
+    renderer.toneMappingExposure = 1.22;
+    el.appendChild(renderer.domElement);
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
-    controls.maxDistance = 420;
-    controls.minDistance = 55;
-    controls.maxPolarAngle = Math.PI * 0.49; // Prevents camera going below floor
-    controls.target.set(0, 45, 0);
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.minDistance = 70;
+    controls.maxDistance = 850;
+    controls.target.set(0, 95, 0);
 
-    // Studio 3-Point Lighting + Shadows
-    scene.add(new THREE.HemisphereLight(0xf8fafc, 0x334155, 0.65));
+    hemiLight = new THREE.HemisphereLight(0xffffff, 0x64748b, 1.05);
+    scene.add(hemiLight);
 
-    const keyLight = new THREE.DirectionalLight(0xfffbeb, 0.9);
-    keyLight.position.set(110, 190, 150);
-    keyLight.castShadow = true;
-    keyLight.shadow.mapSize.width = 1024;
-    keyLight.shadow.mapSize.height = 1024;
-    keyLight.shadow.camera.near = 20;
-    keyLight.shadow.camera.far = 500;
-    const d = 140;
-    keyLight.shadow.camera.left = -d;
-    keyLight.shadow.camera.right = d;
-    keyLight.shadow.camera.top = d;
-    keyLight.shadow.camera.bottom = -d;
-    keyLight.shadow.bias = -0.0005;
-    scene.add(keyLight);
+    sunLight = new THREE.DirectionalLight(0xfffbeb, 1.05);
+    sunLight.position.set(180, 320, 240);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 1024;
+    sunLight.shadow.mapSize.height = 1024;
+    const d = 280;
+    sunLight.shadow.camera.left = -d; sunLight.shadow.camera.right = d;
+    sunLight.shadow.camera.top = d; sunLight.shadow.camera.bottom = -d;
+    sunLight.shadow.bias = -0.0005;
+    scene.add(sunLight);
 
-    const rimLight = new THREE.DirectionalLight(0x93c5fd, 0.35);
-    rimLight.position.set(-140, 100, -90);
-    scene.add(rimLight);
+    const fillLight = new THREE.DirectionalLight(0xe0f2fe, 0.55);
+    fillLight.position.set(-220, 180, 160);
+    scene.add(fillLight);
 
-    roomGroup = new THREE.Group();
-    scene.add(roomGroup);
+    roomGroup = new THREE.Group(); scene.add(roomGroup);
+    sceneGroup = new THREE.Group(); scene.add(sceneGroup);
 
-    cabinetGroup = new THREE.Group();
-    scene.add(cabinetGroup);
-
-    window.addEventListener('resize', onResize);
-    animate();
+    window.addEventListener('resize', () => {
+      camera.aspect = el.clientWidth / el.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(el.clientWidth, el.clientHeight);
+    });
+    (function loop() { requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
   }
 
-  function onResize() {
-    const container = document.getElementById('canvas-container');
-    if (!container || !renderer) return;
-    camera.aspect = container.clientWidth / container.clientHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(container.clientWidth, container.clientHeight);
-  }
-
-  function animate() {
-    requestAnimationFrame(animate);
-    controls.update();
-    renderer.render(scene, camera);
-  }
-
-  function disposeGroup(group) {
-    while (group.children.length > 0) {
-      const obj = group.children[0];
-      if (obj.geometry) obj.geometry.dispose();
-      if (obj.material) {
-        if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
-        else obj.material.dispose();
-      }
-      if (obj.children && obj.children.length) disposeGroup(obj);
-      group.remove(obj);
+  function clearGroup(g) {
+    while (g.children.length) {
+      const o = g.children[0];
+      if (o.geometry) o.geometry.dispose();
+      if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose());
+      if (o.children && o.children.length) clearGroup(o);
+      g.remove(o);
     }
   }
 
-  function buildArchitecturalRoom(D) {
-    disposeGroup(roomGroup);
-    const backZ = -D / 2 - 0.6;
+  function makeTextSprite(text) {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 64;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = 'rgba(15,23,42,0.85)';
+    ctx.fillRect(10, 10, 236, 44);
+    ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 3; ctx.strokeRect(10, 10, 236, 44);
+    ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 24px Cairo, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(text, 128, 33);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c) }));
+    sp.scale.set(68, 17, 1);
+    return sp;
+  }
 
-    // Floor with soft shadow reception
-    const floorGeo = new THREE.PlaneGeometry(340, 260);
-    const floorMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.55, metalness: 0.08 });
-    const floor = new THREE.Mesh(floorGeo, floorMat);
+  function renderRoom() {
+    clearGroup(roomGroup);
+    const W = room.w, D = room.d, H = room.h;
+    const wallMat = new THREE.MeshStandardMaterial({ color: room.wallCol, roughness: 0.78 });
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(W, D),
+      new THREE.MeshStandardMaterial({ map: getFloorTileTex(), roughness: 0.35, metalness: 0.05 })
+    );
     floor.rotation.x = -Math.PI / 2;
-    floor.position.set(0, 0, 25);
     floor.receiveShadow = true;
     roomGroup.add(floor);
 
-    // Subtle Architectural Grid on Floor
-    const grid = new THREE.GridHelper(320, 16, 0x475569, 0x263349);
-    grid.position.y = 0.05;
-    roomGroup.add(grid);
+    const backWall = new THREE.Mesh(new THREE.BoxGeometry(W + 8, H, 4), wallMat);
+    backWall.position.set(0, H / 2, -D / 2 - 2);
+    backWall.receiveShadow = true;
+    roomGroup.add(backWall);
 
-    // Back Kitchen Wall
-    const wallGeo = new THREE.BoxGeometry(320, 250, 2);
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.85 });
-    const wall = new THREE.Mesh(wallGeo, wallMat);
-    wall.position.set(0, 125, backZ - 1);
-    wall.receiveShadow = true;
-    roomGroup.add(wall);
+    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(4, H, D), wallMat);
+    leftWall.position.set(-W / 2 - 2, H / 2, 0);
+    leftWall.receiveShadow = true;
+    roomGroup.add(leftWall);
 
-    // Ceramic Backsplash Zone (between 80cm and 155cm height)
-    const tileTex = getTileTexture();
-    const splashGeo = new THREE.PlaneGeometry(318, 75);
-    const splashMat = new THREE.MeshStandardMaterial({ map: tileTex, bumpMap: tileTex, bumpScale: 0.25, roughness: 0.35 });
-    const splash = new THREE.Mesh(splashGeo, splashMat);
-    splash.position.set(0, 118, backZ + 0.05);
-    splash.receiveShadow = true;
-    roomGroup.add(splash);
+    if (room.win == 1) {
+      const winFrame = new THREE.Mesh(
+        new THREE.BoxGeometry(110, 95, 5),
+        new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4 })
+      );
+      winFrame.position.set(0, 155, -D / 2 - 0.5);
+      roomGroup.add(winFrame);
+
+      const winGlass = new THREE.Mesh(
+        new THREE.PlaneGeometry(102, 87),
+        new THREE.MeshBasicMaterial({ color: 0xe0f2fe })
+      );
+      winGlass.position.set(0, 155, -D / 2 + 2.2);
+      roomGroup.add(winGlass);
+    }
+
+    const lblW = makeTextSprite(`عرض الغرفة: ${W} سم`);
+    lblW.position.set(0, H + 16, -D / 2);
+    roomGroup.add(lblW);
+
+    const lblD = makeTextSprite(`عمق: ${D} سم`);
+    lblD.position.set(-W / 2, H + 16, 0);
+    roomGroup.add(lblD);
   }
 
-  function build3DCabinet(u) {
-    disposeGroup(cabinetGroup);
+  function renderAllUnits() {
+    clearGroup(sceneGroup);
     const T = config.thickness;
-    const W = u.w, H = u.h, D = u.d;
-    const plinth = (u.type === 'wall') ? 0 : u.plinth;
-    const yOffset = (u.type === 'wall') ? 135 : plinth; // Realistic wall cabinet mounting height (135cm)
-    const pal = COLORS[u.colorIdx] || COLORS[0];
-    const isWoodGrain = pal.name.includes('خشبي') || pal.name.includes('بلوط');
 
-    buildArchitecturalRoom(D);
+    units.forEach(u => {
+      const g = new THREE.Group();
+      const W = u.w, H = u.h, D = u.d;
+      const isSel = u.id === selectedId;
+      const pal = COLORS[u.colorIdx] || COLORS[0];
+      const plinth = (u.type === 'wall' || u.type === 'fridge') ? 0 : u.plinth;
+      const yBase = (u.type === 'wall') ? 144 : plinth;
 
-    const doorTex = getWoodTexture(pal.hex, isWoodGrain);
-    const bodyTex = getWoodTexture(pal.body, false);
-    const marbleTex = getMarbleTexture();
-
-    const bodyMat = new THREE.MeshStandardMaterial({
-      map: bodyTex, roughness: 0.55, transparent: xrayMode, opacity: xrayMode ? 0.35 : 1
-    });
-    const doorMat = new THREE.MeshStandardMaterial({
-      map: doorTex, bumpMap: doorTex, bumpScale: isWoodGrain ? 0.35 : 0.08,
-      roughness: isWoodGrain ? 0.42 : 0.32, metalness: 0.04,
-      transparent: xrayMode, opacity: xrayMode ? 0.25 : 1
-    });
-    const backMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.85 });
-    const handleMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.88, roughness: 0.2 });
-    const counterMat = new THREE.MeshStandardMaterial({
-      map: marbleTex, roughness: 0.14, metalness: 0.12
-    });
-    const legMat = new THREE.MeshStandardMaterial({ color: 0x090d16, roughness: 0.6 });
-
-    function addBox(w, h, d, x, y, z, mat, parent = cabinetGroup, cast = true) {
-      const geo = new THREE.BoxGeometry(w, h, d);
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.set(x, y, z);
-      mesh.castShadow = cast && !xrayMode;
-      mesh.receiveShadow = true;
-      const edges = new THREE.EdgesGeometry(geo);
-      const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x0f172a, transparent: true, opacity: 0.22 }));
-      mesh.add(line);
-      parent.add(mesh);
-      return mesh;
-    }
-
-    // Realistic 3D U-shaped Handle helper
-    function addHandle(x, y, z, vertical, parent) {
-      if (vertical) {
-        addBox(0.8, 15, 0.8, x, y, z + 1.4, handleMat, parent, false);
-        addBox(0.8, 0.8, 1.4, x, y + 6, z + 0.7, handleMat, parent, false);
-        addBox(0.8, 0.8, 1.4, x, y - 6, z + 0.7, handleMat, parent, false);
+      const bodyMat = new THREE.MeshStandardMaterial({ map: getTex(pal.body, 'plain'), roughness: 0.55 });
+      const fin = u.finish || 'matte';
+      let doorMat;
+      if (fin === 'glass') {
+        doorMat = new THREE.MeshPhysicalMaterial({ color: 0x1e293b, roughness: 0.1, transparent: true, opacity: 0.42 });
       } else {
-        addBox(16, 0.8, 0.8, x, y, z + 1.4, handleMat, parent, false);
-        addBox(0.8, 0.8, 1.4, x + 6.5, y, z + 0.7, handleMat, parent, false);
-        addBox(0.8, 0.8, 1.4, x - 6.5, y, z + 0.7, handleMat, parent, false);
+        const tm = fin === 'fluted' ? 'fluted' : (fin === 'stone' ? 'stone' : (pal.wood ? 'wood' : 'plain'));
+        const tx = getTex(pal.hex, tm);
+        doorMat = new THREE.MeshStandardMaterial({
+          map: tx, bumpMap: tm !== 'plain' ? tx : null, bumpScale: tm === 'fluted' ? 0.6 : 0.25,
+          roughness: fin === 'gloss' ? 0.12 : 0.5, metalness: fin === 'gloss' ? 0.15 : 0.03
+        });
       }
-    }
 
-    // Sides
-    addBox(T, H, D, -W/2 + T/2, yOffset + H/2, 0, bodyMat);
-    addBox(T, H, D,  W/2 - T/2, yOffset + H/2, 0, bodyMat);
+      const metalMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.22 });
+      const darkMetal = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8, roughness: 0.3 });
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.88, roughness: 0.2 });
+      const marbleMat = new THREE.MeshStandardMaterial({ map: getMarbleTex(), roughness: 0.14, metalness: 0.12 });
 
-    // Bottom
-    const innerW = W - 2 * T;
-    addBox(innerW, T, D, 0, yOffset + T/2, 0, bodyMat);
-
-    // Top / Stretchers
-    if (u.type === 'base' || u.type === 'drawers') {
-      addBox(innerW, T, 10, 0, yOffset + H - T/2, D/2 - 5, bodyMat);
-      addBox(innerW, T, 10, 0, yOffset + H - T/2, -D/2 + 5, bodyMat);
-    } else {
-      addBox(innerW, T, D, 0, yOffset + H - T/2, 0, bodyMat);
-    }
-
-    // Back HDF
-    addBox(W - 0.6, H - 0.6, 0.5, 0, yOffset + H/2, -D/2 + 0.25, backMat);
-
-    // Shelves
-    if (u.shelves > 0) {
-      const step = (H - 2 * T) / (u.shelves + 1);
-      for (let i = 1; i <= u.shelves; i++) {
-        addBox(innerW - 0.2, T, D - 2, 0, yOffset + T + step * i, -1, bodyMat);
+      function box(w, h, d, x, y, z, mat, parent = g, cast = true) {
+        const geo = new THREE.BoxGeometry(w, h, d);
+        const m = new THREE.Mesh(geo, mat);
+        m.position.set(x, y, z);
+        m.castShadow = cast; m.receiveShadow = true;
+        const edge = new THREE.LineSegments(
+          new THREE.EdgesGeometry(geo),
+          new THREE.LineBasicMaterial({ color: isSel ? 0xf59e0b : 0x0f172a, transparent: true, opacity: isSel ? 0.75 : 0.2 })
+        );
+        m.add(edge);
+        parent.add(m);
+        return m;
       }
-    }
 
-    // Plinth & Adjustable Legs
-    if (plinth > 0) {
-      [[-W/2 + 6, D/2 - 8], [W/2 - 6, D/2 - 8], [-W/2 + 6, -D/2 + 8], [W/2 - 6, -D/2 + 8]].forEach(p => {
-        addBox(3.6, plinth, 3.6, p[0], plinth/2, p[1], legMat);
-      });
-      addBox(W - 2, plinth, T, 0, plinth/2, D/2 - 5, doorMat);
-    }
-
-    // Glossy Marble Countertop + Backsplash Upstand
-    if ((u.type === 'base' || u.type === 'drawers') && u.counter == 1) {
-      addBox(W + 2, 3.8, D + 4, 0, yOffset + H + 1.9, 2, counterMat);
-      addBox(W + 2, 6, 1.8, 0, yOffset + H + 6.8, -D/2 + 0.9, counterMat); // Marble upstand
-    }
-
-    // Warm Under-Cabinet LED Strip for Wall Units
-    if (u.type === 'wall') {
-      const ledMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
-      addBox(W - 6, 0.5, 1.5, 0, yOffset - 0.25, 0, ledMat, cabinetGroup, false);
-      const underLight = new THREE.PointLight(0xfde68a, 0.85, 160);
-      underLight.position.set(0, yOffset - 4, 4);
-      cabinetGroup.add(underLight);
-    }
-
-    // Drawers or Hinged Doors
-    if (u.drawers > 0) {
-      const gap = 0.3;
-      const drH = (H - gap * (u.drawers + 1)) / u.drawers;
-      for (let i = 0; i < u.drawers; i++) {
-        const yPos = yOffset + gap + drH/2 + i * (drH + gap);
-        const pull = doorsOpen ? (i === u.drawers - 1 ? 24 : 11) : 0;
-        addBox(W - 0.3, drH, T, 0, yPos, D/2 + T/2 + pull, doorMat);
-        addHandle(0, yPos, D/2 + T + pull, false, cabinetGroup);
+      function handle(x, y, z, vert, parent = g) {
+        if (vert) box(0.8, 15, 1.2, x, y, z + 0.8, goldMat, parent, false);
+        else box(16, 0.8, 1.2, x, y, z + 0.8, goldMat, parent, false);
       }
-    } else if (u.doors > 0) {
-      const gap = 0.3;
-      const doorH = H - gap;
-      if (u.doors == 1) {
-        const doorW = W - gap;
-        const pivot = new THREE.Group();
-        pivot.position.set(-W/2 + gap/2, yOffset + H/2, D/2 + T/2);
-        addBox(doorW, doorH, T, doorW/2, 0, 0, doorMat, pivot);
-        addHandle(doorW - 4, u.type === 'wall' ? -doorH/2 + 12 : doorH/2 - 12, T/2, true, pivot);
-        if (doorsOpen) pivot.rotation.y = -Math.PI * 0.48;
-        cabinetGroup.add(pivot);
+
+      if (u.type === 'fridge') {
+        box(W, H, D, 0, H / 2, 0, metalMat);
+        box(W / 2 - 0.6, H * 0.62, 1.5, -W / 4, H * 0.67, D / 2 + 0.8, metalMat);
+        box(W / 2 - 0.6, H * 0.62, 1.5,  W / 4, H * 0.67, D / 2 + 0.8, metalMat);
+        box(W - 1, H * 0.34, 1.5, 0, H * 0.18, D / 2 + 0.8, metalMat);
+        handle(-4, H * 0.62, D / 2 + 1.6, true);
+        handle( 4, H * 0.62, D / 2 + 1.6, true);
       } else {
-        const doorW = (W / 2) - gap;
-        const pL = new THREE.Group();
-        pL.position.set(-W/2 + gap/2, yOffset + H/2, D/2 + T/2);
-        addBox(doorW, doorH, T, doorW/2, 0, 0, doorMat, pL);
-        addHandle(doorW - 3.5, u.type === 'wall' ? -doorH/2 + 12 : doorH/2 - 12, T/2, true, pL);
-        if (doorsOpen) pL.rotation.y = -Math.PI * 0.48;
-        cabinetGroup.add(pL);
+        box(T, H, D, -W/2 + T/2, yBase + H/2, 0, bodyMat);
+        box(T, H, D,  W/2 - T/2, yBase + H/2, 0, bodyMat);
+        box(W - 2*T, T, D, 0, yBase + T/2, 0, bodyMat);
+        box(W - 2*T, T, 10, 0, yBase + H - T/2, D/2 - 5, bodyMat);
+        box(W - 2*T, T, 10, 0, yBase + H - T/2, -D/2 + 5, bodyMat);
+        box(W - 0.6, H - 0.6, 0.5, 0, yBase + H/2, -D/2 + 0.25, bodyMat);
 
-        const pR = new THREE.Group();
-        pR.position.set(W/2 - gap/2, yOffset + H/2, D/2 + T/2);
-        addBox(doorW, doorH, T, -doorW/2, 0, 0, doorMat, pR);
-        addHandle(-doorW + 3.5, u.type === 'wall' ? -doorH/2 + 12 : doorH/2 - 12, T/2, true, pR);
-        if (doorsOpen) pR.rotation.y = Math.PI * 0.48;
-        cabinetGroup.add(pR);
-      }
-    }
-
-    controls.target.set(0, yOffset + H/2, 0);
-  }
-  
-
-  // ================== 3. CARPENTRY CUT-LIST & 2D NESTING ENGINE ==================
-  function calculateProject() {
-    const T = config.thickness;
-    const pieces = [];
-    let hdfAreaM2 = 0;
-    let totalEdgeM = 0;
-    let totalHinges = 0;
-    let totalSlides = 0;
-    let totalHandles = 0;
-    let totalLegs = 0;
-    let totalCounterM = 0;
-
-    function pushPiece(label, l, w, qty, edgeL, edgeW) {
-      const L = Math.round(l * 10) / 10;
-      const W = Math.round(w * 10) / 10;
-      if (L <= 0 || W <= 0 || qty <= 0) return;
-      const edgePerPieceM = ((edgeL * L) + (edgeW * W)) / 100;
-      totalEdgeM += edgePerPieceM * qty;
-      pieces.push({ label, l: L, w: W, qty, edgeM: edgePerPieceM * qty });
-    }
-
-    units.forEach((u, idx) => {
-      const tag = `و${idx + 1}`;
-      const q = u.qty;
-      const innerW = u.w - 2 * T;
-
-      pushPiece(`${tag} - جانب`, u.h, u.d, 2 * q, 1, 0);
-      pushPiece(`${tag} - قاعدة`, innerW, u.d, 1 * q, 1, 0);
-
-      if (u.type === 'base' || u.type === 'drawers') {
-        pushPiece(`${tag} - عارضة علوية`, innerW, 10, 2 * q, 1, 0);
-        if (u.counter == 1) totalCounterM += (u.w / 100) * q;
-      } else {
-        pushPiece(`${tag} - سقف`, innerW, u.d, 1 * q, 1, 0);
-      }
-
-      if (u.shelves > 0) {
-        pushPiece(`${tag} - رف داخلي`, innerW - 0.2, u.d - 2, u.shelves * q, 1, 0);
-      }
-
-      if (u.type !== 'wall' && u.plinth > 0) {
-        pushPiece(`${tag} - وزرة سفلية`, u.w - 2, u.plinth, 1 * q, 2, 0);
-        totalLegs += 4 * q;
-      }
-
-      hdfAreaM2 += ((u.w - 0.4) * (u.h - 0.4) / 10000) * q;
-
-      if (u.drawers > 0) {
-        const gap = 0.3;
-        const drFaceH = (u.h - gap * (u.drawers + 1)) / u.drawers;
-        const drBoxH = Math.max(10, drFaceH - 4);
-        const drDepth = Math.max(30, u.d - 6);
-        const drInnerW = innerW - 2.6 - 2 * T;
-
-        pushPiece(`${tag} - واجهة درج`, u.w - 0.3, drFaceH, u.drawers * q, 2, 2);
-        pushPiece(`${tag} - جانب درج`, drDepth, drBoxH, 2 * u.drawers * q, 1, 0);
-        pushPiece(`${tag} - ظهر/مقدمة درج`, drInnerW, drBoxH, 2 * u.drawers * q, 1, 0);
-        hdfAreaM2 += ((drInnerW + T) * drDepth / 10000) * u.drawers * q;
-
-        totalSlides += u.drawers * q;
-        totalHandles += u.drawers * q;
-      } else if (u.doors > 0) {
-        const doorW = (u.doors == 1) ? (u.w - 0.3) : ((u.w / 2) - 0.3);
-        const doorH = u.h - 0.3;
-        pushPiece(`${tag} - باب`, doorH, doorW, u.doors * q, 2, 2);
-
-        const hingesPerDoor = doorH > 160 ? 4 : (doorH > 95 ? 3 : 2);
-        totalHinges += hingesPerDoor * u.doors * q;
-        totalHandles += u.doors * q;
-      }
-    });
-
-    const nesting = packSheets(pieces, config.sheetW, config.sheetH, config.kerf);
-
-    const costSheets = nesting.sheets.length * config.priceSheet;
-    const costHdf = hdfAreaM2 * config.priceHdfM2;
-    const costEdge = totalEdgeM * config.priceEdgeM;
-    const costHinges = totalHinges * config.priceHinge;
-    const costSlides = totalSlides * config.priceSlide;
-    const costMisc = (totalHandles + totalLegs) * config.priceMisc;
-    const costCounter = totalCounterM * config.priceCounterM;
-
-    const directCost = costSheets + costHdf + costEdge + costHinges + costSlides + costMisc + costCounter;
-    const profit = directCost * (config.marginPct / 100);
-    const finalPrice = directCost + profit;
-
-    lastCalc = {
-      pieces, nesting, hdfAreaM2, totalEdgeM,
-      totalHinges, totalSlides, totalHandles, totalLegs, totalCounterM,
-      costs: { costSheets, costHdf, costEdge, costHinges, costSlides, costMisc, costCounter, directCost, profit, finalPrice }
-    };
-
-    renderCalculations();
-  }
-
-  function packSheets(piecesList, sheetW, sheetH, kerf) {
-    const rects = [];
-    const oversized = [];
-    piecesList.forEach(p => {
-      for (let i = 0; i < p.qty; i++) {
-        const maxSide = Math.max(p.l, p.w);
-        const minSide = Math.min(p.l, p.w);
-        if (maxSide > Math.max(sheetW, sheetH) || minSide > Math.min(sheetW, sheetH)) {
-          oversized.push(`${p.label} (${p.l}×${p.w})`);
-        } else {
-          rects.push({ label: p.label, l: p.l, w: p.w, area: p.l * p.w });
+        for (let s = 1; s <= u.shelves; s++) {
+          const sy = yBase + T + ((H - 2*T) / (u.shelves + 1)) * s;
+          box(W - 2*T - 0.2, T, D - 2, 0, sy, -1, bodyMat);
         }
-      }
-    });
 
-    rects.sort((a, b) => Math.max(b.l, b.w) - Math.max(a.l, a.w) || b.area - a.area);
+        if (plinth > 0) {
+          box(W, plinth, T, 0, plinth / 2, D/2 - 5, doorMat);
+          box(T, plinth, D - 6, -W/2 + 4, plinth / 2, 0, darkMetal);
+          box(T, plinth, D - 6,  W/2 - 4, plinth / 2, 0, darkMetal);
+        }
 
-    const trim = 1.0;
-    const usableW = sheetW - 2 * trim;
-    const usableH = sheetH - 2 * trim;
-    const sheets = [];
+        if (u.counter == 1 && u.type !== 'wall' && u.type !== 'tall') {
+          box(W + 0.4, 3.8, D + 4, 0, yBase + H + 1.9, 2, marbleMat);
+        }
 
-    function createSheet() {
-      return { shelves: [], items: [], usedArea: 0 };
-    }
+        if (u.type === 'wall') {
+          box(W - 4, 0.6, 1.5, 0, yBase - 0.3, 0, new THREE.MeshBasicMaterial({ color: 0xfef08a }), g, false);
+        }
 
-    rects.forEach(r => {
-      let placed = false;
-      const orientations = [
-        { rw: r.l, rh: r.w, rot: false },
-        { rw: r.w, rh: r.l, rot: true }
-      ];
+        if (u.type === 'sink') {
+          box(W * 0.68, 1.2, D * 0.68, 0, yBase + H + 4.2, 1, metalMat);
+          box(W * 0.58, 0.6, D * 0.56, 0, yBase + H + 4.7, 1, darkMetal);
+          box(2.2, 24, 2.2, 0, yBase + H + 16, -D/2 + 9, metalMat);
+          box(2.2, 2.2, 15, 0, yBase + H + 27, -D/2 + 15, metalMat);
+        } else if (u.type === 'oven') {
+          box(W - 4, H - 6, 2, 0, yBase + H/2, D/2 + 0.5, darkMetal);
+          box(W - 14, H - 22, 2.4, 0, yBase + H/2 - 2, D/2 + 0.8, new THREE.MeshStandardMaterial({ color: 0x090d16, roughness: 0.1 }));
+          handle(0, yBase + H - 11, D/2 + 2, false);
+          box(W * 0.75, 1.4, D * 0.75, 0, yBase + H + 4.3, 1, darkMetal);
+          box(W, 8, D * 0.78, 0, 162, -D * 0.1, metalMat);
+          box(28, 75, 24, 0, 203, -D/2 + 13, metalMat);
+        }
 
-      for (const sh of sheets) {
-        for (const shelf of sh.shelves) {
-          for (const o of orientations) {
-            if (o.rh <= shelf.h && shelf.x + o.rw <= usableW) {
-              sh.items.push({ x: trim + shelf.x, y: trim + shelf.y, w: o.rw, h: o.rh, label: r.label, rot: o.rot });
-              shelf.x += o.rw + kerf;
-              sh.usedArea += o.rw * o.rh;
-              placed = true;
-              break;
-            }
+        if (u.drawers > 0) {
+          const gap = 0.3, drH = (H - gap * (u.drawers + 1)) / u.drawers;
+          for (let i = 0; i < u.drawers; i++) {
+            const yy = yBase + gap + drH/2 + i * (drH + gap);
+            const pull = doorsOpen ? (i === u.drawers - 1 ? 22 : 10) : 0;
+            box(W - 0.3, drH, T, 0, yy, D/2 + T/2 + pull, doorMat);
+            handle(0, yy, D/2 + T + pull, false);
           }
-          if (placed) break;
-        }
-        if (placed) break;
+        } else if (u.doors > 0 && u.type !== 'oven') {
+          const gap = 0.3, dH = H - gap;
+          if (u.doors == 1) {
+            const dW = W - gap, piv = new THREE.Group();
+            piv.position.set(-W/2 + gap/2, yBase + H/2, D/2 + T/2);
+            box(dW, dH, T, dW/2, 0, 0, doorMat, piv);
+            handle(dW - 4, u.type === 'wall' ? -dH/2 + 12 : dH/2 - 12, T/2, true, piv);
+            if (doorsOpen) piv.rotation.y = -Math.PI * 0.45;
+            g.add(piv);
+          } else {
+            const dW = W/2 - gap;
+            const pL = new THREE.Group(); pL.position.set(-W/2 + gap/2, yBase + H/2, D/2 + T/2);
+            box(dW, dH, T, dW/2, 0, 0, doorMat, pL);
+            handle(dW - 3.5, u.type === 'wall' ? -dH/2 + 12 : dH/2 - 12, T/2, true, pL);
+            if (doorsOpen) pL.rotation.y = -Math.PI * 0.45;
+            g.add(pL);
 
-        const usedY = sh.shelves.reduce((acc, s) => acc + s.h + kerf, 0);
-        const validO = orientations.filter(o => o.rw <= usableW && usedY + o.rh <= usableH)
-                                   .sort((a, b) => a.rh - b.rh);
-        if (validO.length > 0) {
-          const best = validO[0];
-          const newShelf = { y: usedY, h: best.rh, x: best.rw + kerf };
-          sh.shelves.push(newShelf);
-          sh.items.push({ x: trim, y: trim + usedY, w: best.rw, h: best.rh, label: r.label, rot: best.rot });
-          sh.usedArea += best.rw * best.rh;
-          placed = true;
-          break;
+            const pR = new THREE.Group(); pR.position.set(W/2 - gap/2, yBase + H/2, D/2 + T/2);
+            box(dW, dH, T, -dW/2, 0, 0, doorMat, pR);
+            handle(-dW + 3.5, u.type === 'wall' ? -dH/2 + 12 : dH/2 - 12, T/2, true, pR);
+            if (doorsOpen) pR.rotation.y = Math.PI * 0.45;
+            g.add(pR);
+          }
         }
       }
 
-      if (!placed) {
-        const sh = createSheet();
-        const best = orientations.filter(o => o.rw <= usableW && o.rh <= usableH)
-                                 .sort((a, b) => a.rh - b.rh)[0] || orientations[0];
-        sh.shelves.push({ y: 0, h: best.rh, x: best.rw + kerf });
-        sh.items.push({ x: trim, y: trim, w: best.rw, h: best.rh, label: r.label, rot: best.rot });
-        sh.usedArea += best.rw * best.rh;
-        sheets.push(sh);
-      }
+      g.position.set(u.x, 0, u.z);
+      g.rotation.y = (u.rot || 0) * Math.PI / 180;
+      sceneGroup.add(g);
     });
-
-    const totalSheetArea = sheets.length * sheetW * sheetH;
-    const totalUsedArea = sheets.reduce((s, sh) => s + sh.usedArea, 0);
-    const eff = totalSheetArea > 0 ? (totalUsedArea / totalSheetArea) * 100 : 0;
-
-    return { sheets, totalUsedAreaM2: totalUsedArea / 10000, eff, waste: Math.max(0, 100 - eff), oversized };
   }
 
-  // ================== 4. UI RENDERING ==================
-  function renderCalculations() {
-    const c = lastCalc;
-    const cur = config.currency;
-    const totalPieces = c.pieces.reduce((s, p) => s + p.qty, 0);
-
-    document.getElementById('price-badge').textContent = `${Math.round(c.costs.finalPrice).toLocaleString()} ${cur}`;
-    document.getElementById('kpi-pieces').textContent = totalPieces;
-    document.getElementById('kpi-area').textContent = `${c.nesting.totalUsedAreaM2.toFixed(2)} م²`;
-        document.getElementById('kpi-edge').textContent = `${c.totalEdgeM.toFixed(1)} م`;
-    document.getElementById('kpi-hdf').textContent = `${c.hdfAreaM2.toFixed(2)} م²`;
-
-    document.getElementById('cutlist-tbody').innerHTML = c.pieces.map(p => `
-      <tr>
-        <td><strong>${p.label}</strong></td>
-        <td>${p.l}</td>
-        <td>${p.w}</td>
-        <td>${p.qty}</td>
-        <td>${p.edgeM.toFixed(2)}</td>
-      </tr>
-    `).join('');
-
-    document.getElementById('hardware-tbody').innerHTML = `
-      <tr><td>مفصلات هيدروليك</td><td><strong>${c.totalHinges}</strong></td><td>حسب ارتفاع كل باب</td></tr>
-      <tr><td>طقم سكك أدراج (يمين+يسار)</td><td><strong>${c.totalSlides}</strong></td><td>تخليص 2.6 سم</td></tr>
-      <tr><td>مقابض أبواب وأدراج</td><td><strong>${c.totalHandles}</strong></td><td>عدد الفتحات</td></tr>
-      <tr><td>أرجل مطبخ قابلة للضبط</td><td><strong>${c.totalLegs}</strong></td><td>4 لكل وحدة أرضية</td></tr>
-      <tr><td>رخامة / سطح عمل (متر طولي)</td><td><strong>${c.totalCounterM.toFixed(2)} م</strong></td><td>بروز أمامي 4 سم</td></tr>
-    `;
-
-    document.getElementById('nest-sheets').textContent = c.nesting.sheets.length;
-    document.getElementById('nest-eff').textContent = `${c.nesting.eff.toFixed(1)}%`;
-    document.getElementById('nest-waste').textContent = `${c.nesting.waste.toFixed(1)}%`;
-    document.getElementById('nest-size').textContent = `${config.sheetW}×${config.sheetH}`;
-
-    const warnEl = document.getElementById('nesting-warning');
-    if (c.nesting.oversized.length > 0) {
-      warnEl.style.display = 'block';
-      warnEl.textContent = `⚠️ تنبيه: القطع التالية أكبر من مقاس اللوح المحدد: ${c.nesting.oversized.join('، ')}`;
+  // ================== 3. PRESETS, CATALOG & MOVEMENT ==================
+  function applyPreset(type) {
+    const backZ = -room.d / 2 + 30;
+    if (type === 'straight') {
+      units = [
+        mkUnit('fridge', -135, -room.d/2 + 35, 0, 2, 'matte'),
+        mkUnit('sink',   -45,  backZ, 0, 1, 'matte'),
+        mkUnit('drawers', 40,  backZ, 0, 1, 'matte'),
+        mkUnit('oven',   120,  backZ, 0, 1, 'matte'),
+        mkUnit('wall',   -45, -room.d/2 + 18, 0, 7, 'fluted'),
+        mkUnit('wall',    40, -room.d/2 + 18, 0, 2, 'glass')
+      ];
+        } else if (type === 'lshape') {
+      units = [
+        mkUnit('corner', -130, -room.d/2 + 46, 0, 1, 'matte'),
+        mkUnit('sink',   -40,  backZ, 0, 1, 'matte'),
+        mkUnit('drawers', 45,  backZ, 0, 1, 'matte'),
+        mkUnit('oven',   125,  backZ, 0, 1, 'matte'),
+        mkUnit('base',   -130, -room.d/2 + 132, 90, 1, 'matte'),
+        mkUnit('fridge', -130, -room.d/2 + 218, 90, 2, 'matte'),
+        mkUnit('wall',   -40, -room.d/2 + 18, 0, 7, 'fluted'),
+        mkUnit('wall',    45, -room.d/2 + 18, 0, 2, 'glass')
+      ];
     } else {
-      warnEl.style.display = 'none';
+      units = [
+        mkUnit('fridge', -135, -room.d/2 + 35, 0, 2, 'matte'),
+        mkUnit('sink',   -45,  backZ, 0, 1, 'matte'),
+        mkUnit('oven',    40,  backZ, 0, 1, 'matte'),
+        mkUnit('tall',   115, -room.d/2 + 30, 0, 7, 'fluted'),
+        mkUnit('wall',   -45, -room.d/2 + 18, 0, 7, 'fluted'),
+        mkUnit('wall',    40, -room.d/2 + 18, 0, 2, 'glass'),
+        mkUnit('island', -10,  45, 0, 4, 'gloss')
+      ];
     }
-
-    document.getElementById('nesting-container').innerHTML = c.nesting.sheets.map((sh, idx) => {
-      const shEff = ((sh.usedArea / (config.sheetW * config.sheetH)) * 100).toFixed(1);
-      return `
-        <div class="sheet-card">
-          <div class="sheet-header">
-            <span>🪵 اللوح رقم #${idx + 1} (${config.sheetW} × ${config.sheetH} سم)</span>
-            <span style="color:var(--success);">استغلال: ${shEff}% | قطع: ${sh.items.length}</span>
-          </div>
-          ${buildSheetSVG(sh, config.sheetW, config.sheetH)}
-        </div>
-      `;
-    }).join('');
-
-    document.getElementById('final-price-display').textContent = `${Math.round(c.costs.finalPrice).toLocaleString()} ${cur}`;
-    document.getElementById('direct-cost-display').textContent = `${Math.round(c.costs.directCost).toLocaleString()} ${cur}`;
-    document.getElementById('profit-display').textContent = `${Math.round(c.costs.profit).toLocaleString()} ${cur}`;
-
-    document.getElementById('cost-tbody').innerHTML = `
-      <tr><td>ألواح الخشب (${config.thickness} سم)</td><td>${c.nesting.sheets.length} لوح</td><td>${c.costs.costSheets.toFixed(1)} ${cur}</td></tr>
-      <tr><td>ألواح الظهر HDF</td><td>${c.hdfAreaM2.toFixed(2)} م²</td><td>${c.costs.costHdf.toFixed(1)} ${cur}</td></tr>
-      <tr><td>شريط الحواف PVC</td><td>${c.totalEdgeM.toFixed(1)} م</td><td>${c.costs.costEdge.toFixed(1)} ${cur}</td></tr>
-      <tr><td>مفصلات هيدروليك</td><td>${c.totalHinges} قطعة</td><td>${c.costs.costHinges.toFixed(1)} ${cur}</td></tr>
-      <tr><td>سكك أدراج</td><td>${c.totalSlides} طقم</td><td>${c.costs.costSlides.toFixed(1)} ${cur}</td></tr>
-      <tr><td>مقابض وأرجل</td><td>${c.totalHandles + c.totalLegs} قطعة</td><td>${c.costs.costMisc.toFixed(1)} ${cur}</td></tr>
-      <tr><td>الرخامة العلوية</td><td>${c.totalCounterM.toFixed(2)} م</td><td>${c.costs.costCounter.toFixed(1)} ${cur}</td></tr>
-      <tr style="background:rgba(245,158,11,0.1);"><td><strong>المصنعية والتركيب والربح (${config.marginPct}%)</strong></td><td>—</td><td><strong>${c.costs.profit.toFixed(1)} ${cur}</strong></td></tr>
-    `;
+    selectedId = units[0].id;
+    syncAll();
   }
 
-  function buildSheetSVG(sheet, W, H, isPrint = false) {
-    const bg = isPrint ? '#f8fafc' : '#172033';
-    const stroke = isPrint ? '#0f172a' : '#f59e0b';
-    const fill = isPrint ? '#e2e8f0' : 'rgba(245, 158, 11, 0.22)';
-    const txtColor = isPrint ? '#0f172a' : '#f8fafc';
-
-    const rects = sheet.items.map(it => {
-      const fs = Math.max(4.5, Math.min(it.w, it.h) * 0.22);
-      const showLabel = it.w > 18 && it.h > 10;
-      return `
-        <rect x="${it.x}" y="${it.y}" width="${it.w}" height="${it.h}" fill="${fill}" stroke="${stroke}" stroke-width="0.6" />
-        ${showLabel ? `<text x="${it.x + it.w/2}" y="${it.y + it.h/2}" fill="${txtColor}" font-size="${fs}" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Cairo">${it.w}×${it.h}</text>` : ''}
-      `;
-    }).join('');
-
-    return `<svg class="sheet-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-      <rect x="0" y="0" width="${W}" height="${H}" fill="${bg}" stroke="#64748b" stroke-width="1" />
-      ${rects}
-    </svg>`;
+  function mkUnit(type, x, z, rot, colorIdx, finish) {
+    const m = UNIT_META[type];
+    return {
+      id: Date.now() + Math.random(), type, name: m.name,
+      w: m.w, h: m.h, d: m.d, doors: m.doors, shelves: m.shelves,
+      drawers: m.drawers, plinth: m.plinth, counter: m.counter,
+      x, z, rot, colorIdx, finish
+    };
   }
 
-  // ================== 5. INTERACTIONS & UNITS ==================
-  function renderSwatches() {
-    const activeU = getActiveUnit();
-    document.getElementById('color-swatches').innerHTML = COLORS.map((c, i) => `
-      <div class="swatch ${activeU.colorIdx === i ? 'active' : ''}" title="${c.name}"
-           style="background:${c.hex};" onclick="selectColor(${i})"></div>
+  function addCatalogItem(type) {
+    const backZ = type === 'island' ? 40 : (-room.d / 2 + UNIT_META[type].d / 2 + 2);
+    const u = mkUnit(type, 0, backZ, 0, 1, 'matte');
+    units.push(u);
+    selectedId = u.id;
+    syncAll();
+    openTab('edit', document.querySelectorAll('.tab-pill')[2]);
+  }
+
+  function getSel() { return units.find(u => u.id === selectedId) || units[0]; }
+
+  function nudgeUnit(dx, dz) {
+    const u = getSel(); if (!u) return;
+    u.x += dx; u.z += dz;
+    syncAll();
+  }
+
+  function rotateUnit() {
+    const u = getSel(); if (!u) return;
+    u.rot = ((u.rot || 0) + 90) % 360;
+    syncAll();
+  }
+
+  function updateRoom() {
+    room.w = Math.max(180, parseFloat(document.getElementById('r-w').value) || 380);
+    room.d = Math.max(180, parseFloat(document.getElementById('r-d').value) || 320);
+    room.h = Math.max(220, parseFloat(document.getElementById('r-h').value) || 280);
+    room.win = parseInt(document.getElementById('r-win').value);
+    room.wallCol = document.getElementById('r-wallcol').value;
+    renderRoom();
+  }
+
+  function loadEditForm() {
+    const u = getSel(); if (!u) return;
+    document.getElementById('hud-selected').textContent = `المحدد: ${u.name} (${u.w}×${u.h} سم)`;
+    document.getElementById('e-x').value = Math.round(u.x);
+    document.getElementById('e-z').value = Math.round(u.z);
+    document.getElementById('e-rot').value = u.rot || 0;
+    document.getElementById('e-w').value = u.w;
+    document.getElementById('e-h').value = u.h;
+    document.getElementById('e-d').value = u.d;
+    document.getElementById('e-finish').value = u.finish || 'matte';
+    document.getElementById('e-doors').value = u.doors;
+    document.getElementById('e-shelves').value = u.shelves;
+    document.getElementById('col-lbl').textContent = (COLORS[u.colorIdx] || COLORS[0]).name;
+
+    document.getElementById('swatches').innerHTML = COLORS.map((c, i) => `
+      <div class="swatch ${u.colorIdx === i ? 'active' : ''}" style="background:${c.hex}" onclick="setUnitColor(${i})"></div>
     `).join('');
-  }
 
-  function selectColor(idx) {
-    const u = getActiveUnit();
-    u.colorIdx = idx;
-    renderSwatches();
-    build3DCabinet(u);
-  }
-
-  function getActiveUnit() {
-    return units.find(u => u.id === activeUnitId) || units[0];
-  }
-
-  function loadUnitToForm(u) {
-    document.getElementById('u-type').value = u.type;
-    document.getElementById('u-qty').value = u.qty;
-    document.getElementById('u-w').value = u.w;
-    document.getElementById('u-h').value = u.h;
-    document.getElementById('u-d').value = u.d;
-    document.getElementById('u-doors').value = u.doors;
-    document.getElementById('u-shelves').value = u.shelves;
-    document.getElementById('u-drawers').value = u.drawers;
-    document.getElementById('u-plinth').value = u.plinth;
-    document.getElementById('u-counter').value = u.counter;
-    document.getElementById('dim-badge').textContent = `${u.w} × ${u.h} × ${u.d} سم`;
-    renderSwatches();
-    build3DCabinet(u);
-  }
-
-  function onTypeChange() {
-    const t = document.getElementById('u-type').value;
-    if (t === 'base') {
-      setVals(80, 72, 56, 2, 1, 0, 10, 1);
-    } else if (t === 'wall') {
-      setVals(80, 70, 34, 2, 2, 0, 0, 0);
-    } else if (t === 'tall') {
-      setVals(60, 210, 58, 1, 5, 0, 10, 0);
-    } else if (t === 'drawers') {
-      setVals(80, 72, 56, 0, 0, 3, 10, 1);
-    }
-    updateCurrentUnit();
-  }
-
-  function setVals(w, h, d, doors, shelves, drawers, plinth, counter) {
-    document.getElementById('u-w').value = w;
-    document.getElementById('u-h').value = h;
-    document.getElementById('u-d').value = d;
-    document.getElementById('u-doors').value = doors;
-    document.getElementById('u-shelves').value = shelves;
-    document.getElementById('u-drawers').value = drawers;
-    document.getElementById('u-plinth').value = plinth;
-    document.getElementById('u-counter').value = counter;
-  }
-
-  const TYPE_NAMES = { base: 'خزانة سفلية', wall: 'خزانة علوية', tall: 'خزانة عمودية', drawers: 'وحدة أدراج' };
-
-  function updateCurrentUnit() {
-    const u = getActiveUnit();
-    u.type = document.getElementById('u-type').value;
-    u.name = TYPE_NAMES[u.type];
-    u.qty = Math.max(1, parseInt(document.getElementById('u-qty').value) || 1);
-    u.w = Math.max(20, parseFloat(document.getElementById('u-w').value) || 60);
-    u.h = Math.max(20, parseFloat(document.getElementById('u-h').value) || 72);
-    u.d = Math.max(20, parseFloat(document.getElementById('u-d').value) || 56);
-    u.doors = parseInt(document.getElementById('u-doors').value) || 0;
-    u.shelves = Math.max(0, parseInt(document.getElementById('u-shelves').value) || 0);
-    u.drawers = Math.max(0, parseInt(document.getElementById('u-drawers').value) || 0);
-    u.plinth = Math.max(0, parseFloat(document.getElementById('u-plinth').value) || 0);
-    u.counter = parseInt(document.getElementById('u-counter').value) || 0;
-
-    document.getElementById('dim-badge').textContent = `${u.w} × ${u.h} × ${u.d} سم`;
-    build3DCabinet(u);
-    renderUnitList();
-    calculateProject();
-  }
-
-  function addUnitToProject() {
-    const cur = getActiveUnit();
-    const copy = { ...cur, id: Date.now() };
-    units.push(copy);
-    activeUnitId = copy.id;
-    renderUnitList();
-    loadUnitToForm(copy);
-    calculateProject();
-  }
-
-  function selectUnit(id) {
-    activeUnitId = id;
-    renderUnitList();
-    loadUnitToForm(getActiveUnit());
-  }
-
-  function deleteUnit(id, e) {
-    e.stopPropagation();
-    if (units.length === 1) return;
-    units = units.filter(u => u.id !== id);
-    if (activeUnitId === id) activeUnitId = units[0].id;
-    renderUnitList();
-    loadUnitToForm(getActiveUnit());
-    calculateProject();
-  }
-
-  function clearProject() {
-    units = [{ id: Date.now(), type: 'base', name: 'خزانة سفلية', w: 80, h: 72, d: 56, doors: 2, shelves: 1, drawers: 0, plinth: 10, counter: 1, qty: 1, colorIdx: 2 }];
-    activeUnitId = units[0].id;
-    renderUnitList();
-    loadUnitToForm(units[0]);
-    calculateProject();
-  }
-
-  function renderUnitList() {
-    document.getElementById('units-count').textContent = units.reduce((s, u) => s + u.qty, 0);
-    document.getElementById('unit-list').innerHTML = units.map((u, i) => `
-      <div class="unit-item ${u.id === activeUnitId ? 'active-unit' : ''}" onclick="selectUnit(${u.id})">
-        <div>
-          <div class="unit-title">و${i + 1}: ${u.name} ${u.qty > 1 ? `(×${u.qty})` : ''}</div>
-          <div class="unit-meta">${u.w}×${u.h}×${u.d} سم | ${u.drawers > 0 ? u.drawers + ' أدراج' : u.doors + ' أبواب'} | ${u.shelves} رف</div>
-        </div>
-        ${units.length > 1 ? `<button class="btn btn-danger btn-sm" onclick="deleteUnit(${u.id}, event)">✕</button>` : ''}
+    document.getElementById('units-strip').innerHTML = units.map((item, idx) => `
+      <div class="unit-chip ${item.id === selectedId ? 'selected' : ''}" onclick="selectUnit(${item.id})">
+        ${idx + 1}. ${item.name}
       </div>
     `).join('');
+  }
+
+  function selectUnit(id) { selectedId = id; syncAll(); }
+  function setUnitColor(i) { getSel().colorIdx = i; syncAll(); }
+
+  function updateSelectedUnit() {
+    const u = getSel(); if (!u) return;
+    u.x = parseFloat(document.getElementById('e-x').value) || 0;
+    u.z = parseFloat(document.getElementById('e-z').value) || 0;
+    u.rot = parseInt(document.getElementById('e-rot').value) || 0;
+    u.w = Math.max(30, parseFloat(document.getElementById('e-w').value) || 60);
+    u.h = Math.max(30, parseFloat(document.getElementById('e-h').value) || 72);
+    u.d = Math.max(25, parseFloat(document.getElementById('e-d').value) || 56);
+    u.finish = document.getElementById('e-finish').value;
+    u.doors = parseInt(document.getElementById('e-doors').value) || 0;
+    u.shelves = Math.max(0, parseInt(document.getElementById('e-shelves').value) || 0);
+    syncAll(false);
+  }
+
+  function duplicateSelected() {
+    const u = getSel(); if (!u) return;
+    const copy = { ...u, id: Date.now() + Math.random(), x: u.x + 40 };
+    units.push(copy); selectedId = copy.id; syncAll();
+  }
+
+  function deleteSelected() {
+    if (units.length <= 1) return;
+    units = units.filter(u => u.id !== selectedId);
+    selectedId = units[0].id; syncAll();
   }
 
   function toggleDoors() {
     doorsOpen = !doorsOpen;
-    document.getElementById('btn-doors').textContent = doorsOpen ? '🚪 إغلاق الأبواب' : '🚪 فتح الأبواب';
-    build3DCabinet(getActiveUnit());
+    document.getElementById('btn-doors').textContent = doorsOpen ? '🚪 إغلاق' : '🚪 فتح';
+    renderAllUnits();
   }
 
-  function toggleXray() {
-    xrayMode = !xrayMode;
-    document.getElementById('btn-xray').textContent = xrayMode ? '🧱 عرض صلب' : '👁️ شفافية';
-    build3DCabinet(getActiveUnit());
+  function toggleStudioLight() {
+    brightBoost = !brightBoost;
+    hemiLight.intensity = brightBoost ? 1.05 : 0.55;
+    sunLight.intensity = brightBoost ? 1.05 : 0.65;
+    renderer.toneMappingExposure = brightBoost ? 1.22 : 0.92;
   }
 
-  function resetCamera() {
-    camera.position.set(135, 115, 175);
-    controls.update();
-  }
+  function resetCamera() { camera.position.set(220, 210, 340); controls.target.set(0, 95, 0); }
 
-  function switchTab(id, btn) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  function openTab(name, btn) {
+    document.querySelectorAll('.tab-pill').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
-    document.getElementById('tab-' + id).classList.add('active');
+    document.getElementById('pane-' + name).classList.add('active');
   }
 
-  // ================== 6. SETTINGS, PDF PRINT & WHATSAPP ==================
-  function openSettings() {
-    document.getElementById('set-brand').value = config.brand;
-    document.getElementById('set-phone').value = config.phone;
-    document.getElementById('set-sw').value = config.sheetW;
-    document.getElementById('set-sh').value = config.sheetH;
-    document.getElementById('set-thick').value = config.thickness;
-    document.getElementById('set-kerf').value = config.kerf;
-    document.getElementById('set-curr').value = config.currency;
-    document.getElementById('set-p-sheet').value = config.priceSheet;
-    document.getElementById('set-p-hdf').value = config.priceHdfM2;
-    document.getElementById('set-p-edge').value = config.priceEdgeM;
-    document.getElementById('set-p-hinge').value = config.priceHinge;
-    document.getElementById('set-p-slide').value = config.priceSlide;
-    document.getElementById('set-p-misc').value = config.priceMisc;
-    document.getElementById('set-p-counter').value = config.priceCounterM;
-    document.getElementById('set-margin').value = config.marginPct;
-    document.getElementById('settings-modal').classList.add('open');
-  }
+  // ================== 4. CUT-LIST, 2D NESTING & QUOTE ==================
+  function calculateAll() {
+    const T = config.thickness;
+    const pieces = [];
+    let hdfM2 = 0, edgeM = 0, hinges = 0, slides = 0, misc = 0, counterM = 0;
 
-  function closeSettings() {
-    document.getElementById('settings-modal').classList.remove('open');
-  }
-
-  function saveSettings() {
-    config.brand = document.getElementById('set-brand').value.trim() || DEFAULT_CONFIG.brand;
-    config.phone = document.getElementById('set-phone').value.trim();
-    config.sheetW = parseFloat(document.getElementById('set-sw').value) || 244;
-    config.sheetH = parseFloat(document.getElementById('set-sh').value) || 122;
-    config.thickness = parseFloat(document.getElementById('set-thick').value) || 1.8;
-    config.kerf = parseFloat(document.getElementById('set-kerf').value) || 0.4;
-    config.currency = document.getElementById('set-curr').value.trim() || '$';
-    config.priceSheet = parseFloat(document.getElementById('set-p-sheet').value) || 0;
-    config.priceHdfM2 = parseFloat(document.getElementById('set-p-hdf').value) || 0;
-    config.priceEdgeM = parseFloat(document.getElementById('set-p-edge').value) || 0;
-    config.priceHinge = parseFloat(document.getElementById('set-p-hinge').value) || 0;
-    config.priceSlide = parseFloat(document.getElementById('set-p-slide').value) || 0;
-    config.priceMisc = parseFloat(document.getElementById('set-p-misc').value) || 0;
-    config.priceCounterM = parseFloat(document.getElementById('set-p-counter').value) || 0;
-    config.marginPct = parseFloat(document.getElementById('set-margin').value) || 0;
-
-    localStorage.setItem('kp3d_config', JSON.stringify(config));
-    applyBrandUI();
-    build3DCabinet(getActiveUnit());
-    calculateProject();
-    closeSettings();
-  }
-
-  function printDocument(mode) {
-    const c = lastCalc;
-    const cur = config.currency;
-    const client = document.getElementById('client-name').value || 'عميلنا الكريم';
-    const matLabel = document.getElementById('material-label').value;
-    const dateStr = new Date().toLocaleDateString('ar-EG');
-
-    let html = `
-      <div style="display:flex; justify-content:space-between; border-bottom:2px solid #0f172a; padding-bottom:10px; margin-bottom:16px;">
-        <div>
-          <h2 style="margin:0;">${config.brand}</h2>
-          <div style="font-size:13px;">${config.phone ? 'هاتف: ' + config.phone : ''}</div>
-        </div>
-        <div style="text-align:left; font-size:13px;">
-          <div><strong>${mode === 'client' ? 'عرض سعر تفصيل مطبخ' : 'أمر عمل وقائمة قص للورشة'}</strong></div>
-          <div>التاريخ: ${dateStr}</div>
-        </div>
-      </div>
-    `;
-
-    if (mode === 'client') {
-      html += `
-        <p><strong>السيد/ة:</strong> ${client} &nbsp;|&nbsp; <strong>الخامة:</strong> ${matLabel}</p>
-        <h3>تفاصيل الوحدات المشمولة:</h3>
-        <table>
-          <thead><tr><th>#</th><th>الوحدة</th><th>الأبعاد (سم)</th><th>المواصفات</th><th>العدد</th></tr></thead>
-          <tbody>
-            ${units.map((u, i) => `
-              <tr>
-                <td>${i+1}</td>
-                <td>${u.name}</td>
-                <td>${u.w} × ${u.h} × ${u.d}</td>
-                <td>${u.drawers > 0 ? u.drawers + ' أدراج' : u.doors + ' أبواب'}، ${u.shelves} رف</td>
-                <td>${u.qty}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-        <div style="margin-top:18px; padding:14px; border:2px solid #0f172a; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
-          <strong style="font-size:18px;">الإجمالي النهائي (شامل التصنيع والتركيب):</strong>
-          <strong style="font-size:22px;">${Math.round(c.costs.finalPrice).toLocaleString()} ${cur}</strong>
-        </div>
-      `;
-    } else {
-      html += `
-        <p><strong>عدد الألواح المطلوبة:</strong> ${c.nesting.sheets.length} لوح (${config.sheetW}×${config.sheetH} سم) | <strong>شريط PVC:</strong> ${c.totalEdgeM.toFixed(1)} م | <strong>الظهر HDF:</strong> ${c.hdfAreaM2.toFixed(2)} م²</p>
-        <h3>1. جدول القص الدقيق:</h3>
-        <table>
-          <thead><tr><th>القطعة</th><th>الطول (سم)</th><th>العرض (سم)</th><th>العدد</th><th>الشريط (م)</th></tr></thead>
-          <tbody>
-            ${c.pieces.map(p => `<tr><td>${p.label}</td><td>${p.l}</td><td>${p.w}</td><td>${p.qty}</td><td>${p.edgeM.toFixed(2)}</td></tr>`).join('')}
-          </tbody>
-        </table>
-        <h3 style="margin-top:16px;">2. خرائط قص الألواح:</h3>
-        ${c.nesting.sheets.map((sh, i) => `
-          <div class="print-sheet">
-            <div style="font-weight:700; margin-bottom:4px;">اللوح #${i+1} (${config.sheetW}×${config.sheetH} سم)</div>
-            ${buildSheetSVG(sh, config.sheetW, config.sheetH, true)}
-          </div>
-        `).join('')}
-      `;
+    function addP(label, l, w, qty, eL, eW) {
+      const L = Math.round(l * 10) / 10, W = Math.round(w * 10) / 10;
+      if (L <= 0 || W <= 0 || qty <= 0) return;
+      const em = ((eL * L + eW * W) / 100) * qty;
+      edgeM += em;
+      pieces.push({ label, l: L, w: W, qty, edgeM: em });
     }
 
+    units.forEach((u, idx) => {
+      if (u.type === 'fridge') return;
+      const tag = `و${idx + 1}`;
+      const inW = u.w - 2 * T;
+      addP(`${tag} جانب`, u.h, u.d, 2, 1, 0);
+      addP(`${tag} قاعدة`, inW, u.d, 1, 1, 0);
+      addP(`${tag} عارضة/سقف`, inW, u.type === 'wall' || u.type === 'tall' ? u.d : 10, u.type === 'wall' || u.type === 'tall' ? 1 : 2, 1, 0);
+
+      if (u.shelves > 0) addP(`${tag} رف`, inW - 0.2, u.d - 2, u.shelves, 1, 0);
+      if (u.plinth > 0) { addP(`${tag} وزرة`, u.w - 2, u.plinth, 1, 2, 0); misc += 4; }
+      if (u.counter == 1) counterM += u.w / 100;
+      hdfM2 += ((u.w - 0.4) * (u.h - 0.4)) / 10000;
+
+      if (u.drawers > 0) {
+        const dH = (u.h - 0.3 * (u.drawers + 1)) / u.drawers;
+        addP(`${tag} واجهة درج`, u.w - 0.3, dH, u.drawers, 2, 2);
+        addP(`${tag} جوانب درج`, u.d - 6, Math.max(10, dH - 4), u.drawers * 2, 1, 0);
+        slides += u.drawers; misc += u.drawers;
+      } else if (u.doors > 0 && u.type !== 'oven') {
+        const dW = u.doors == 1 ? u.w - 0.3 : u.w / 2 - 0.3;
+        addP(`${tag} باب`, u.h - 0.3, dW, u.doors, 2, 2);
+        hinges += (u.h > 150 ? 4 : 2) * u.doors;
+        misc += u.doors;
+      }
+    });
+
+    const nest = packSheets(pieces, config.sheetW, config.sheetH, config.kerf);
+    const cSheets = nest.sheets.length * config.priceSheet;
+    const cHdf = hdfM2 * config.priceHdfM2;
+    const cEdge = edgeM * config.priceEdgeM;
+    const cHard = hinges * config.priceHinge + slides * config.priceSlide + misc * config.priceMisc;
+    const cCount = counterM * config.priceCounterM;
+    const direct = cSheets + cHdf + cEdge + cHard + cCount;
+    const profit = direct * (config.marginPct / 100);
+    const total = direct + profit;
+
+    lastCalc = { pieces, nest, hdfM2, edgeM, hinges, slides, misc, counterM, cSheets, cHdf, cEdge, cHard, cCount, direct, profit, total };
+
+    const cur = config.currency;
+    document.getElementById('hud-price').textContent = `${Math.round(total).toLocaleString()} ${cur}`;
+    document.getElementById('k-sheets').textContent = nest.sheets.length;
+    document.getElementById('k-eff').textContent = `${nest.eff.toFixed(0)}%`;
+    document.getElementById('k-edge').textContent = `${edgeM.toFixed(1)} م`;
+    document.getElementById('k-hdf').textContent = `${hdfM2.toFixed(2)} م²`;
+
+    document.getElementById('cut-tbody').innerHTML = pieces.map(p => `
+      <tr><td><b>${p.label}</b></td><td>${p.l}</td><td>${p.w}</td><td>${p.qty}</td><td>${p.edgeM.toFixed(1)}</td></tr>
+    `).join('');
+
+    document.getElementById('nesting-list').innerHTML = nest.sheets.map((sh, i) => `
+      <div class="sheet-box">
+        <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700;">
+          <span>🪵 لوح #${i + 1} (${config.sheetW}×${config.sheetH} سم)</span>
+          <span style="color:var(--success);">${sh.items.length} قطعة</span>
+        </div>
+        ${makeSVG(sh, config.sheetW, config.sheetH, false)}
+      </div>
+    `).join('');
+
+    document.getElementById('q-final').textContent = `${Math.round(total).toLocaleString()} ${cur}`;
+    document.getElementById('q-cost').textContent = `${Math.round(direct)} ${cur}`;
+    document.getElementById('q-profit').textContent = `${Math.round(profit)} ${cur}`;
+
+    document.getElementById('cost-tbody').innerHTML = `
+      <tr><td>ألواح الخشب</td><td>${nest.sheets.length} لوح</td><td>${cSheets.toFixed(0)} ${cur}</td></tr>
+      <tr><td>الظهر HDF والشريط</td><td>${edgeM.toFixed(1)} م</td><td>${(cHdf + cEdge).toFixed(0)} ${cur}</td></tr>
+      <tr><td>المفصلات والسكك والأرجل</td><td>${hinges + slides + misc} قطعة</td><td>${cHard.toFixed(0)} ${cur}</td></tr>
+      <tr><td>الرخامة العلوية</td><td>${counterM.toFixed(2)} م</td><td>${cCount.toFixed(0)} ${cur}</td></tr>
+      <tr><td><b>المصنعية والتركيب والربح</b></td><td>${config.marginPct}%</td><td><b>${profit.toFixed(0)} ${cur}</b></td></tr>
+    `;
+  }
+
+  function packSheets(list, sW, sH, kerf) {
+    const rects = [];
+    list.forEach(p => { for (let i = 0; i < p.qty; i++) rects.push({ label: p.label, l: p.l, w: p.w }); });
+    rects.sort((a, b) => Math.max(b.l, b.w) - Math.max(a.l, a.w));
+    const uW = sW - 2, uH = sH - 2, sheets = [];
+
+    rects.forEach(r => {
+      let ok = false;
+      const opts = [{ rw: r.l, rh: r.w }, { rw: r.w, rh: r.l }].filter(o => o.rw <= uW && o.rh <= uH);
+      if (!opts.length) return;
+
+      for (const sh of sheets) {
+        for (const sl of sh.shelves) {
+          for (const o of opts) {
+            if (o.rh <= sl.h && sl.x + o.rw <= uW) {
+              sh.items.push({ x: 1 + sl.x, y: 1 + sl.y, w: o.rw, h: o.rh, label: r.label });
+              sl.x += o.rw + kerf; sh.used += o.rw * o.rh; ok = true; break;
+            }
+          }
+          if (ok) break;
+        }
+        if (ok) break;
+        const usedY = sh.shelves.reduce((a, s) => a + s.h + kerf, 0);
+        const fit = opts.filter(o => usedY + o.rh <= uH).sort((a, b) => a.rh - b.rh)[0];
+        if (fit) {
+          sh.shelves.push({ y: usedY, h: fit.rh, x: fit.rw + kerf });
+          sh.items.push({ x: 1, y: 1 + usedY, w: fit.rw, h: fit.rh, label: r.label });
+          sh.used += fit.rw * fit.rh; ok = true; break;
+        }
+      }
+      if (!ok) {
+        const fit = opts.sort((a, b) => a.rh - b.rh)[0];
+        sheets.push({
+          shelves: [{ y: 0, h: fit.rh, x: fit.rw + kerf }],
+          items: [{ x: 1, y: 1, w: fit.rw, h: fit.rh, label: r.label }],
+          used: fit.rw * fit.rh
+        });
+      }
+    });
+
+    const tot = sheets.length * sW * sH;
+    const used = sheets.reduce((a, s) => a + s.used, 0);
+    return { sheets, eff: tot ? (used / tot) * 100 : 0 };
+  }
+
+  function makeSVG(sh, W, H, printMode) {
+    const bg = printMode ? '#f8fafc' : '#0b1120';
+    const fill = printMode ? '#e2e8f0' : 'rgba(245,158,11,0.22)';
+    const stroke = printMode ? '#0f172a' : '#f59e0b';
+    const txt = printMode ? '#0f172a' : '#f8fafc';
+    const items = sh.items.map(it => {
+      const fs = Math.max(4.5, Math.min(it.w, it.h) * 0.22);
+      return `<rect x="${it.x}" y="${it.y}" width="${it.w}" height="${it.h}" fill="${fill}" stroke="${stroke}" stroke-width="0.6"/>` +
+        (it.w > 18 && it.h > 10 ? `<text x="${it.x + it.w/2}" y="${it.y + it.h/2}" fill="${txt}" font-size="${fs}" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="Cairo">${it.w}×${it.h}</text>` : '');
+    }).join('');
+    return `<svg class="sheet-svg" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" fill="${bg}" stroke="#64748b"/>${items}</svg>`;
+  }
+
+  // ================== 5. SETTINGS, PDF & WHATSAPP ==================
+  function openSettings() {
+    document.getElementById('s-brand').value = config.brand;
+    document.getElementById('s-phone').value = config.phone;
+    document.getElementById('s-sw').value = config.sheetW;
+    document.getElementById('s-sh').value = config.sheetH;
+    document.getElementById('s-curr').value = config.currency;
+    document.getElementById('s-psheet').value = config.priceSheet;
+    document.getElementById('s-pcounter').value = config.priceCounterM;
+    document.getElementById('s-margin').value = config.marginPct;
+    document.getElementById('settings-modal').classList.add('open');
+  }
+  function closeSettings() { document.getElementById('settings-modal').classList.remove('open'); }
+  function saveSettings() {
+    config.brand = document.getElementById('s-brand').value.trim() || DEF_CFG.brand;
+    config.phone = document.getElementById('s-phone').value.trim();
+    config.sheetW = parseFloat(document.getElementById('s-sw').value) || 244;
+    config.sheetH = parseFloat(document.getElementById('s-sh').value) || 122;
+    config.currency = document.getElementById('s-curr').value.trim() || '$';
+    config.priceSheet = parseFloat(document.getElementById('s-psheet').value) || 48;
+    config.priceCounterM = parseFloat(document.getElementById('s-pcounter').value) || 90;
+    config.marginPct = parseFloat(document.getElementById('s-margin').value) || 40;
+    localStorage.setItem('kp3d_v3', JSON.stringify(config));
+    applyBrand(); syncAll(); closeSettings();
+  }
+
+  function printPDF(mode) {
+    const c = lastCalc, cur = config.currency;
+    const client = document.getElementById('q-client').value || 'عميلنا الكريم';
+    let html = `<h2>${config.brand} ${config.phone ? '— ' + config.phone : ''}</h2>`;
+    if (mode === 'client') {
+      html += `<p><b>عرض سعر للعميل:</b> ${client} | <b>الخامة:</b> ${document.getElementById('q-mat').value}</p>
+        <table><thead><tr><th>#</th><th>الوحدة</th><th>الأبعاد</th></tr></thead><tbody>
+        ${units.map((u, i) => `<tr><td>${i+1}</td><td>${u.name}</td><td>${u.w}×${u.h}×${u.d} سم</td></tr>`).join('')}
+        </tbody></table><h3>الإجمالي النهائي: ${Math.round(c.total).toLocaleString()} ${cur}</h3>`;
+    } else {
+      html += `<p><b>أمر قص للورشة:</b> ${c.nest.sheets.length} لوح | شريط: ${c.edgeM.toFixed(1)} م</p>
+        <table><thead><tr><th>القطعة</th><th>الطول</th><th>العرض</th><th>العدد</th></tr></thead><tbody>
+        ${c.pieces.map(p => `<tr><td>${p.label}</td><td>${p.l}</td><td>${p.w}</td><td>${p.qty}</td></tr>`).join('')}
+        </tbody></table>` + c.nest.sheets.map((sh, i) => `<h4>لوح #${i+1}</h4>${makeSVG(sh, config.sheetW, config.sheetH, true)}`).join('');
+    }
     document.getElementById('print-area').innerHTML = html;
     window.print();
   }
 
-  function shareWhatsApp() {
-    const c = lastCalc;
-    const cur = config.currency;
-    const client = document.getElementById('client-name').value || 'عميلنا الكريم';
-    const matLabel = document.getElementById('material-label').value;
-    const unitLines = units.map((u, i) => `• ${u.name} (${u.w}×${u.h}×${u.d} سم) × ${u.qty}`).join('\n');
-
-    const msg = `*عرض سعر تفصيل مطبخ — ${config.brand}*\n` +
-      `مرحباً ${client}، إليك تفاصيل العرض:\n\n` +
-      `*الوحدات:*\n${unitLines}\n\n` +
-      `*الخامة:* ${matLabel}\n` +
-      `*الإجمالي النهائي:* ${Math.round(c.costs.finalPrice).toLocaleString()} ${cur}\n` +
-      (config.phone ? `\nللتأكيد والتواصل: ${config.phone}` : '');
-
+  function sendWhatsApp() {
+    const c = lastCalc, cur = config.currency;
+    const msg = `*عرض سعر تصميم مطبخ — ${config.brand}*\n` +
+      units.map(u => `• ${u.name} (${u.w}×${u.h} سم)`).join('\n') +
+      `\n\n*الإجمالي:* ${Math.round(c.total).toLocaleString()} ${cur}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
   }
 
-  // ================== BOOT ==================
-  applyBrandUI();
+  function syncAll(reloadForm = true) {
+    renderAllUnits();
+    if (reloadForm) loadEditForm();
+    calculateAll();
+  }
+
+  // Boot
+  applyBrand();
   init3D();
-  renderUnitList();
-  loadUnitToForm(units[0]);
-  calculateProject();
+  renderRoom();
+  applyPreset('lshape');
 </script>
 </body>
 </html>
+  
